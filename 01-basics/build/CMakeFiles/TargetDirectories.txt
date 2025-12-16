@@ -1,3 +1,0 @@
-/Users/willandrews/Desktop/winter-2025-2026-studies/concurrency/01-basics/build/CMakeFiles/HASH.dir
-/Users/willandrews/Desktop/winter-2025-2026-studies/concurrency/01-basics/build/CMakeFiles/edit_cache.dir
-/Users/willandrews/Desktop/winter-2025-2026-studies/concurrency/01-basics/build/CMakeFiles/rebuild_cache.dir
