@@ -1,0 +1,14 @@
+[
+{
+  "directory": "/Users/willandrews/Desktop/winter-2025-2026-studies/concurrency/01-basics/build",
+  "command": "/usr/bin/c++  -I/Users/willandrews/Desktop/winter-2025-2026-studies/concurrency/01-basics/src -I/Users/willandrews/Desktop/winter-2025-2026-studies/concurrency/01-basics/include -O3 -mavx512f  -std=gnu++2b -arch arm64 -o CMakeFiles/HASH.dir/src/HashTable.cpp.o -c /Users/willandrews/Desktop/winter-2025-2026-studies/concurrency/01-basics/src/HashTable.cpp",
+  "file": "/Users/willandrews/Desktop/winter-2025-2026-studies/concurrency/01-basics/src/HashTable.cpp",
+  "output": "CMakeFiles/HASH.dir/src/HashTable.cpp.o"
+},
+{
+  "directory": "/Users/willandrews/Desktop/winter-2025-2026-studies/concurrency/01-basics/build",
+  "command": "/usr/bin/c++  -I/Users/willandrews/Desktop/winter-2025-2026-studies/concurrency/01-basics/src -I/Users/willandrews/Desktop/winter-2025-2026-studies/concurrency/01-basics/include -O3 -mavx512f  -std=gnu++2b -arch arm64 -o CMakeFiles/HASH.dir/src/Main.cpp.o -c /Users/willandrews/Desktop/winter-2025-2026-studies/concurrency/01-basics/src/Main.cpp",
+  "file": "/Users/willandrews/Desktop/winter-2025-2026-studies/concurrency/01-basics/src/Main.cpp",
+  "output": "CMakeFiles/HASH.dir/src/Main.cpp.o"
+}
+]
