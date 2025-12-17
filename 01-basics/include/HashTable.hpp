@@ -4,27 +4,30 @@
 #pragma once
 
 struct state {
-    uint32_t i, j, k;
+    float i, j, k;
 };
 
 struct node {
-    state key;
+    const state key;
     float value;
     struct node* next;
 };
 
+bool operator==(const state op1, const state op2);
+bool operator!=(const state op1, const state op2);
 
 class HashTable {
     private:
-        node* array;
+        node** array;
         int size;
         int capacity;
     public:
         HashTable();
         HashTable(HashTable& table);
         ~HashTable();
-        float lookup(state key);
-        void insert(node input);
-        void insert(state key, float value);
-        bool remove(state key);
+        int hash(const state& key);
+        float lookup(const state& key);
+        void insert(const node& input);
+        void insert(const state& key, float value);
+        bool remove(const state& key);
 };
