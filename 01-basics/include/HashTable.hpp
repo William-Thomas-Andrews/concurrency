@@ -8,6 +8,7 @@ struct state {
     state& operator=(const state& other_state);
     state();
     state(int i, int j, int k);
+    ~state();
 };
 
 std::ostream& operator<<(std::ostream& out, const state& input);
@@ -23,6 +24,7 @@ struct node {
     node();
     node(const state& key, float value);
     node(const node& input);
+    ~node();
 };
 
 bool operator==(const state op1, const state op2);
@@ -36,6 +38,7 @@ class HashTable {
         node** array;
         int size;
         int capacity;
+        
     public:
         HashTable();
         HashTable(HashTable& table);
@@ -45,7 +48,10 @@ class HashTable {
         int hash(const state& key);
         float lookup(const state& key);
         void insert(node& input);
+        void insert(node&& input);
         void insert(const state& key, const float value);
+        void insert(const state&& key, const float value);
         bool remove(const state& key);
         void print_table();
+        int get_table_size();
 };
