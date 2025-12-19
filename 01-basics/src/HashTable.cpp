@@ -25,8 +25,6 @@ bool operator!=(const state op1, const state op2) {
 }
 
 state& state::operator=(const state& other_state) {
-    // print_state(*this);
-    // print_state(other_state);
     this->i = other_state.i;
     this->j = other_state.j;
     this->k = other_state.k;
@@ -34,16 +32,16 @@ state& state::operator=(const state& other_state) {
 }
 
 std::ostream& operator<<(std::ostream& out, const state& input) {
-    out << "<" << input.i << ", " << input.j << ", " << input.k << ">";
+    out << "[" << input.i << "," << input.j << "," << input.k << "]";
     return out;
 }
 
 void print_state(state& s) {
-    std::cout << "<" << s.i << ", " << s.j << ", " << s.k << ">" << std::endl;
+    std::cout << "[" << s.i << "," << s.j << "," << s.k << "]" << std::endl;
 }
 
 void print_state(const state& s) {
-    std::cout << "<" << s.i << ", " << s.j << ", " << s.k << ">" << std::endl;
+    std::cout << "[" << s.i << "," << s.j << "," << s.k << "]" << std::endl;
 }
 
 
@@ -103,23 +101,37 @@ HashTable::HashTable() : size(0), capacity(16) {
     this->array = (node**)malloc(sizeof(node*) * this->capacity);
 }
 
-HashTable::HashTable(HashTable& table) {
-    this->size = table.size;
-    this->capacity = table.capacity;
+HashTable::HashTable(int cap) : size(0), capacity(cap) {
+    // std::cout << "[DEBUG] Init hashtable of size " << capacity << " \n";
     this->array = (node**)malloc(sizeof(node*) * this->capacity);
+    //////// [DEBUG]
+    std::cout << "[DEBUG] Init hashtable of size " << this->capacity << " \n";
+    this->print_table();
+}
+
+HashTable::HashTable(HashTable& table) {
+    this->copy_from(table);
+}
+
+void HashTable::copy_from(HashTable& table) {
+    table.print_table();
+    this->free_table();
+    this->array = (node**)malloc(table.capacity * sizeof(node*));
+    this->size = 0;
+    this->capacity = table.capacity;
     node* ptr;
-    for (int i = 0; i < this->capacity; i++) {
-        this->array[i] = new node(*table.array[i]); 
-        ptr = this->array[i];
-        while (ptr->next != NULL) { // creating copies of the chained data too
-            this->array[i]->next = new node(*(ptr->next));
-            ptr = ptr->next; // move up pointer
+    for (int i = 0; i < table.capacity; i++) {
+        ptr = table.array[i];
+        while (ptr != NULL) {
+            this->insert(*ptr);
+            // this->print_table();
+            ptr = ptr->next;
         }
     }
+    this->print_table();
 }
 
 void HashTable::free_chain(node* base) {
-    
     if (base == NULL) return;
     node* ptr;
     while (base->next != NULL) {
@@ -134,37 +146,22 @@ void HashTable::free_chain(node* base) {
     delete base;
 }
 
+void HashTable::free_table() {
+    for (int i = 0; i < this->capacity; i++) this->free_chain(this->array[i]);
+}
+
 HashTable::~HashTable() {
-    for (int i = 0; i < this->capacity; i++) {
-        free_chain(this->array[i]);
-    }
+    this->free_table();
 }
 
 HashTable& HashTable::operator=(HashTable& table) {
-    for (int i = 0; i < this->capacity; i++) {
-        free_chain(this->array[i]);
-    }
-    this->size = table.size;
-    this->capacity = table.capacity;
-    this->array = (node**)malloc(sizeof(node*) * this->capacity);
-    node* ptr;
-    for (int i = 0; i < this->capacity; i++) {
-        this->array[i] = new node(*table.array[i]); 
-        ptr = this->array[i];
-        while (ptr->next != NULL) { // creating copies of the chained data too
-            this->array[i]->next = new node(*(ptr->next));
-            ptr = ptr->next; // move up pointer
-        }
-    }
+    this->free_table();
+    this->copy_from(table);
     return *this;
 }
 
 int HashTable::hash(const state& key) {
-    int result = 1 + ((int) key.i);
-    result *=  1 + ((int) key.j);
-    result *=  1 + ((int) key.k);
-    result %=  this->capacity;
-    return result;
+    return (((int) key.i) + ((int) key.j) + ((int) key.k)) % this->capacity;
 }
 
 float HashTable::lookup(const state& key) {
@@ -178,7 +175,25 @@ float HashTable::lookup(const state& key) {
     return ptr->value;
 }
 
+void HashTable::rehash_to(HashTable& table) {
+    node* ptr;
+    for (int i = 0; i < this->capacity; i++) {
+        ptr = this->array[i];
+        while (ptr != NULL) {
+            table.insert(*ptr);
+            ptr = ptr->next;
+        }
+    }
+}
+
+void HashTable::expand() {
+    HashTable temp = HashTable(this->capacity * 2);
+    this->rehash_to(temp);
+    this->copy_from(temp);;
+}
+
 void HashTable::insert(node& input) {
+    if (this->size == capacity) this->expand(); // increases hash table size if needed
     int index = hash(input.key);
     node* ptr = this->array[index];
     if (ptr == NULL) {
@@ -191,7 +206,8 @@ void HashTable::insert(node& input) {
 }
 
 void HashTable::insert(node&& input) {
-    int index = hash(input.key);
+    if (this->size == capacity) this->expand(); // increases hash table size if needed
+     int index = hash(input.key);
     node* ptr = this->array[index];
     if (ptr == NULL) {
         this->array[index] = new node(input);
@@ -204,6 +220,7 @@ void HashTable::insert(node&& input) {
 
 void HashTable::insert(const state& key, const float value) { 
     node input{key, value};
+    if (this->size == capacity) this->expand(); // increases hash table size if needed
     int index = hash(input.key);
     node* ptr = this->array[index];
     if (ptr == NULL) {
@@ -217,6 +234,7 @@ void HashTable::insert(const state& key, const float value) {
 
 void HashTable::insert(const state&& key, const float value) { 
     node input{key, value};
+    if (this->size == capacity) this->expand(); // increases hash table size if needed
     int index = hash(input.key);
     node* ptr = this->array[index];
     if (ptr == NULL) {
@@ -239,12 +257,36 @@ bool HashTable::remove(const state& key) {
     return false;
 }
 
-void HashTable::print_table() {
-    for (int i = 0; i < this->capacity; i++) {
-        // std::cout << *this->array[i] << " ";
-        print_node(this->array[i]);
+void HashTable::print_chain(const node* head) {
+    if (head == NULL) {
+        std::cout << "(empty)";
+        return;
     }
-    std::cout << std::endl;
+    const node* ptr = head;
+    while (ptr != NULL) {
+        std::cout << ptr->key << "(" << ptr->value << ")";
+        if (ptr->next != NULL) {
+            std::cout << " -> ";
+        }
+        ptr = ptr->next;
+    }
+}
+
+
+void HashTable::print_table() {
+    std::cout << "HashTable (capacity = " << this->capacity
+              << ", size = " << this->size << ")\n";
+    std::cout << "--------------------------------------------------\n";
+
+    for (int i = 0; i < this->capacity; ++i) {
+        std::cout << "[ ";
+        if (i < 10) std::cout << " ";   // alignment for single-digit indices
+        std::cout << i << " ] : ";
+        print_chain(this->array[i]);
+        std::cout << '\n';
+    }
+
+    std::cout << "--------------------------------------------------\n";
 }
 
 int HashTable::get_table_size() {

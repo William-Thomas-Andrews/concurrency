@@ -8,7 +8,7 @@ int main() {
     // table.insert(*input);
     // table.print_table();
 
-    HashTable table;
+    HashTable table{3};
 
     state s{1, 2, 3};
     print_state(s);
@@ -18,7 +18,7 @@ int main() {
 
     table.print_table();
 
-    node input2{s, 12.0f};
+    node input2{s, 11.0f};
     table.insert(input2);
 
     table.print_table();
@@ -37,17 +37,17 @@ int main() {
     table.print_table();
 
     for (int i = 0; i < 100; i++) {
-        table.insert(node(state(12,453, 452), 100));
+        table.insert(node(state(rand() % 101,453, 452), 100));
         table.print_table();
     }
     
     std::cout << table.get_table_size() << std::endl;
 
-    std::cout << table.lookup(state(12,453, 452)) << std::endl;;
+    std::cout << table.lookup(state(46, 453, 452)) << std::endl;;
 }
 
+// TODO: implement custom iterator to abstract things further
 // TODO: Make sure all functions including removal work
-// TODO: Add hashtable expansion
 // TODO: Add iterative hashing and test
 // TODO: Add concurrency
 // TODO: Add more concurrent methods and compare results

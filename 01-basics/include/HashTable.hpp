@@ -41,17 +41,23 @@ class HashTable {
         
     public:
         HashTable();
+        HashTable(int capacity);
         HashTable(HashTable& table);
+        void copy_from(HashTable& table);
         void free_chain(node* base);
+        void free_table();
         ~HashTable();
         HashTable& operator=(HashTable& table);
         int hash(const state& key);
         float lookup(const state& key);
+        void rehash_to(HashTable& table);
+        void expand();
         void insert(node& input);
         void insert(node&& input);
         void insert(const state& key, const float value);
         void insert(const state&& key, const float value);
         bool remove(const state& key);
+        void print_chain(const node* head);
         void print_table();
         int get_table_size();
 };
