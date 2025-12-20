@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdint>
+#include <vector>
 
 #pragma once
 
@@ -35,8 +36,9 @@ void print_node(const node* input);
 
 class HashTable {
     private:
-        node** array;
-        int size;
+        std::vector<node*> array;
+        int num_entries;
+        int num_items;
         int capacity;
         
     public:
@@ -59,5 +61,5 @@ class HashTable {
         bool remove(const state& key);
         void print_chain(const node* head);
         void print_table();
-        int get_table_size();
+        int get_num_entries();
 };

@@ -42,7 +42,7 @@ int main() {
         table.print_table();
     }
     
-    std::cout << table.get_table_size() << std::endl;
+    std::cout << table.get_num_entries() << std::endl;
 
     std::cout << table.lookup(state(46, 453, 452)) << std::endl;;
 

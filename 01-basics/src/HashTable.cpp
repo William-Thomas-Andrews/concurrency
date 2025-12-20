@@ -52,7 +52,7 @@ void print_state(const state& s) {
 node& node::operator=(const node& other_node) {
     this->key = other_node.key;
     this->value = other_node.value;
-    this->next = NULL;
+    this->next = nullptr;
     return *this;
 }
 
@@ -63,24 +63,24 @@ node::node() {
 node::node(const state& key, float value) {
     this->key = key;
     this->value = value;
-    this->next = NULL;
+    this->next = nullptr;
 }
 
 node::node(const node& input) {
     this->key = input.key;
     this->value = input.value;
-    this->next = NULL;
+    this->next = nullptr;
 }
 
 node::~node() {}
 
 void print_node(const node* input) {
-    if (input == NULL) std::cout << "||-||" << std::endl;
+    if (input == nullptr) std::cout << "||-||" << std::endl;
     else {
         std::cout << "||" << input->key << ":" << input->value << "|| ";
         node* ptr = input->next;
-        while (ptr != NULL) {
-            if (ptr->next == NULL)  std::cout << "||" << ptr->key << ":" << ptr->value << "||"; // if last iteration
+        while (ptr != nullptr) {
+            if (ptr->next == nullptr)  std::cout << "||" << ptr->key << ":" << ptr->value << "||"; // if last iteration
             else std::cout << "||" << ptr->key << ":" << ptr->value << "||  ";
             ptr = ptr->next;
         }
@@ -97,13 +97,15 @@ std::ostream& operator<<(std::ostream& out, const node& input) {
 
 
 
-HashTable::HashTable() : size(0), capacity(16) {
-    this->array = (node**)malloc(sizeof(node*) * this->capacity);
+HashTable::HashTable() : num_entries(0), num_items(0), capacity(16) {
+    // this->array = (node**)malloc(sizeof(node*) * this->capacity); // [DEPRECATED]
+    this->array.resize(this->capacity, nullptr);
 }
 
-HashTable::HashTable(int cap) : size(0), capacity(cap) {
-    // std::cout << "[DEBUG] Init hashtable of size " << capacity << " \n";
-    this->array = (node**)malloc(sizeof(node*) * this->capacity);
+HashTable::HashTable(int cap) : num_entries(0), num_items(0), capacity(cap) {
+    // std::cout << "[DEBUG] Init hashtable of num_entries " << capacity << " \n";
+    // this->array = (node**)malloc(sizeof(node*) * this->capacity); // [DEPRECATED]
+    this->array.resize(this->capacity, nullptr);
     //////// [DEBUG]
     std::cout << "[DEBUG] Init hashtable of size " << this->capacity << " \n";
     this->print_table();
@@ -114,28 +116,28 @@ HashTable::HashTable(HashTable& table) {
 }
 
 void HashTable::copy_from(HashTable& table) {
-    table.print_table();
     this->free_table();
-    this->array = (node**)malloc(table.capacity * sizeof(node*));
-    this->size = 0;
+    // this->array = (node**)malloc(table.capacity * sizeof(node*)); // [DEPRECATED]
+    this->array.clear();
     this->capacity = table.capacity;
+    this->array.resize(this->capacity, nullptr);
+    this->num_entries = 0;
+    this->num_items = 0;
     node* ptr;
     for (int i = 0; i < table.capacity; i++) {
         ptr = table.array[i];
-        while (ptr != NULL) {
+        while (ptr != nullptr) {
             this->insert(*ptr);
-            // this->print_table();
             ptr = ptr->next;
         }
     }
-    this->print_table();
 }
 
 void HashTable::free_chain(node* base) {
-    if (base == NULL) return;
+    if (base == nullptr) return;
     node* ptr;
-    while (base->next != NULL) {
-        if (base->next->next == NULL) {
+    while (base->next != nullptr) {
+        if (base->next->next == nullptr) {
             delete base->next;
             break;
         }
@@ -144,6 +146,7 @@ void HashTable::free_chain(node* base) {
         delete ptr;
     }
     delete base;
+    base = nullptr;
 }
 
 void HashTable::free_table() {
@@ -167,7 +170,7 @@ int HashTable::hash(const state& key) {
 float HashTable::lookup(const state& key) {
     node* ptr = this->array[hash(key)];
     while (ptr->key != key) {
-        if (ptr->next == NULL) {
+        if (ptr->next == nullptr) {
             throw std::out_of_range("Item not found.\n");
         }
         ptr = ptr->next;
@@ -179,7 +182,7 @@ void HashTable::rehash_to(HashTable& table) {
     node* ptr;
     for (int i = 0; i < this->capacity; i++) {
         ptr = this->array[i];
-        while (ptr != NULL) {
+        while (ptr != nullptr) {
             table.insert(*ptr);
             ptr = ptr->next;
         }
@@ -193,69 +196,85 @@ void HashTable::expand() {
 }
 
 void HashTable::insert(node& input) {
-    if (this->size == capacity) this->expand(); // increases hash table size if needed
+    if (this->num_entries == capacity) this->expand(); // increases hash table size if needed
     int index = hash(input.key);
     node* ptr = this->array[index];
-    if (ptr == NULL) {
+    std::cout << "hiii" << std::endl;
+    this->num_items++;
+    if (ptr == nullptr) {
         this->array[index] = new node(input);
-        this->size++;
+        this->num_entries++;
         return;
     }
-    while (ptr != NULL and ptr->next != NULL) ptr = ptr->next;
+    std::cout << *ptr << std::endl;
+    while (ptr != nullptr and ptr->next != nullptr) {
+        // std::cout << *ptr << std::endl;
+        this->print_table();
+        std::cout << "here" << std::endl;
+        ptr = ptr->next;
+    }
+    std::cout << "hiii1" << std::endl;
     ptr->next = new node(input);
 }
 
 void HashTable::insert(node&& input) {
-    if (this->size == capacity) this->expand(); // increases hash table size if needed
-     int index = hash(input.key);
+    if (this->num_entries == capacity) this->expand(); // increases hash table size if needed
+    int index = hash(input.key);
     node* ptr = this->array[index];
-    if (ptr == NULL) {
+    this->num_items++;
+    std::cout << std::endl << "Inserting: " << input << std::endl << std::endl;
+    if (ptr == nullptr) {
         this->array[index] = new node(input);
-        this->size++;
+        this->num_entries++;
         return;
     }
-    while (ptr != NULL and ptr->next != NULL) ptr = ptr->next;
+    while (ptr != nullptr and ptr->next != nullptr) ptr = ptr->next;
     ptr->next = new node(input);
 }
 
 void HashTable::insert(const state& key, const float value) { 
     node input{key, value};
-    if (this->size == capacity) this->expand(); // increases hash table size if needed
+    if (this->num_entries == capacity) this->expand(); // increases hash table num_entries if needed
     int index = hash(input.key);
     node* ptr = this->array[index];
-    if (ptr == NULL) {
+    this->num_items++;
+    if (ptr == nullptr) {
         this->array[index] = new node(input);
-        this->size++;
+        this->num_entries++;
         return;
     }
-    while (ptr != NULL and ptr->next != NULL) ptr = ptr->next;
+    while (ptr != nullptr and ptr->next != nullptr) ptr = ptr->next;
     ptr->next = new node(input);
 }
 
 void HashTable::insert(const state&& key, const float value) { 
     node input{key, value};
-    if (this->size == capacity) this->expand(); // increases hash table size if needed
+    if (this->num_entries == capacity) this->expand(); // increases hash table num_entries if needed
     int index = hash(input.key);
     node* ptr = this->array[index];
-    if (ptr == NULL) {
+    this->num_items++;
+    if (ptr == nullptr) {
         this->array[index] = new node(input);
-        this->size++;
+        this->num_entries++;
         return;
     }
-    while (ptr != NULL and ptr->next != NULL) ptr = ptr->next;
+    while (ptr != nullptr and ptr->next != nullptr) ptr = ptr->next;
     ptr->next = new node(input);
 }
 
 bool HashTable::remove(const state& key) {
     int index = hash(key);
     node* ptr = this->array[index];
-    node* prev = this->array[index];
-    if (ptr == NULL) return false;
-    while (ptr->next != NULL) {
-        if (ptr->next->key == key) {
-            delete &ptr->next->key;
-            ptr->next = NULL;
-            this->size--;
+    node* temp;
+    if (ptr == nullptr) return false;
+    while (ptr->next != nullptr) {
+        if (ptr->next->key == key) { // if we have found the key
+            temp = ptr->next;
+            if (ptr->next->next != nullptr) ptr->next = ptr->next->next;
+            delete temp;
+            // temp = nullptr; // i dont think this line is necessary
+            this->num_items--;
+            if (this->array[index] == nullptr) this->num_entries--; // if we just removed a whole entry
             return true;
         }
         ptr = ptr->next;
@@ -264,14 +283,14 @@ bool HashTable::remove(const state& key) {
 }
 
 void HashTable::print_chain(const node* head) {
-    if (head == NULL) {
+    if (head == nullptr) {
         std::cout << "(empty)";
         return;
     }
     const node* ptr = head;
-    while (ptr != NULL) {
+    while (ptr != nullptr) {
         std::cout << ptr->key << "(" << ptr->value << ")";
-        if (ptr->next != NULL) {
+        if (ptr->next != nullptr) {
             std::cout << " -> ";
         }
         ptr = ptr->next;
@@ -281,7 +300,7 @@ void HashTable::print_chain(const node* head) {
 
 void HashTable::print_table() {
     std::cout << "HashTable (capacity = " << this->capacity
-              << ", size = " << this->size << ")\n";
+              << ", num_entries = " << this->num_entries << ", num_items = " << this->num_items << ")\n";
     std::cout << "--------------------------------------------------\n";
 
     for (int i = 0; i < this->capacity; ++i) {
@@ -295,6 +314,6 @@ void HashTable::print_table() {
     std::cout << "--------------------------------------------------\n";
 }
 
-int HashTable::get_table_size() {
-    return this->size;
+int HashTable::get_num_entries() {
+    return this->num_entries;
 }
