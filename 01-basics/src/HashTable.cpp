@@ -2,9 +2,7 @@
 
 
 
-state::state() {
-    ;
-}
+state::state() = default;
 
 state::state(int i, int j, int k) {
     this->i = i;
@@ -14,13 +12,13 @@ state::state(int i, int j, int k) {
 
 state::~state() {}
 
-bool operator==(const state op1, const state op2) {
-    if (op1.i == op2.i and op1.j == op2.j and op1.k == op2.k) return true;
+bool operator==(const state& op1, const state& op2) {
+    if (op1.i == op2.i && op1.j == op2.j && op1.k == op2.k) return true;
     return false;
 }
 
-bool operator!=(const state op1, const state op2) {
-    if (op1.i == op2.i and op1.j == op2.j and op1.k == op2.k) return false;
+bool operator!=(const state& op1, const state& op2) {
+    if (op1.i == op2.i && op1.j == op2.j && op1.k == op2.k) return false;
     return true;
 }
 
@@ -29,6 +27,14 @@ state& state::operator=(const state& other_state) {
     this->j = other_state.j;
     this->k = other_state.k;
     return *this;
+}
+
+std::string get_string(state& state) {
+    return "[" + std::to_string(state.i) + "," + std::to_string(state.j) + "," + std::to_string(state.k) + "]";
+}
+
+std::string get_string(const state& state) {
+    return "[" + std::to_string(state.i) + "," + std::to_string(state.j) + "," + std::to_string(state.k) + "]";
 }
 
 std::ostream& operator<<(std::ostream& out, const state& input) {
@@ -52,7 +58,7 @@ void print_state(const state& s) {
 node& node::operator=(const node& other_node) {
     this->key = other_node.key;
     this->value = other_node.value;
-    this->next = NULL;
+    this->next = nullptr;
     return *this;
 }
 
@@ -60,27 +66,35 @@ node::node() {
     ;
 }
 
-node::node(const state& key, float value) {
+node::node(const state& key, int value) {
     this->key = key;
     this->value = value;
-    this->next = NULL;
+    this->next = nullptr;
 }
 
 node::node(const node& input) {
     this->key = input.key;
     this->value = input.value;
-    this->next = NULL;
+    this->next = nullptr;
 }
 
 node::~node() {}
 
+std::string get_string(node& node) {
+    return  get_string(node.key) + "(" + std::to_string(node.value) + ")";
+}
+
+std::string get_string(const node& node) {
+    return  get_string(node.key) + "(" + std::to_string(node.value) + ")";
+}
+
 void print_node(const node* input) {
-    if (input == NULL) std::cout << "||-||" << std::endl;
+    if (input == nullptr) std::cout << "||-||" << std::endl;
     else {
         std::cout << "||" << input->key << ":" << input->value << "|| ";
         node* ptr = input->next;
-        while (ptr != NULL) {
-            if (ptr->next == NULL)  std::cout << "||" << ptr->key << ":" << ptr->value << "||"; // if last iteration
+        while (ptr != nullptr) {
+            if (ptr->next == nullptr)  std::cout << "||" << ptr->key << ":" << ptr->value << "||"; // if last iteration
             else std::cout << "||" << ptr->key << ":" << ptr->value << "||  ";
             ptr = ptr->next;
         }
@@ -97,16 +111,18 @@ std::ostream& operator<<(std::ostream& out, const node& input) {
 
 
 
-HashTable::HashTable() : size(0), capacity(16) {
-    this->array = (node**)malloc(sizeof(node*) * this->capacity);
+HashTable::HashTable() : num_entries(0), num_items(0), capacity(16) {
+    // this->array = (node**)malloc(sizeof(node*) * this->capacity); // [DEPRECATED]
+    this->array.resize(this->capacity, nullptr);
 }
 
-HashTable::HashTable(int cap) : size(0), capacity(cap) {
-    // std::cout << "[DEBUG] Init hashtable of size " << capacity << " \n";
-    this->array = (node**)malloc(sizeof(node*) * this->capacity);
+HashTable::HashTable(int cap) : num_entries(0), num_items(0), capacity(cap) {
+    // std::cout << "[DEBUG] Init hashtable of num_entries " << capacity << " \n";
+    // this->array = (node**)malloc(sizeof(node*) * this->capacity); // [DEPRECATED]
+    this->array.resize(this->capacity, nullptr);
     //////// [DEBUG]
-    std::cout << "[DEBUG] Init hashtable of size " << this->capacity << " \n";
-    this->print_table();
+    // std::cout << "[DEBUG] Init hashtable of size " << this->capacity << " \n";
+    // this->print_table();
 }
 
 HashTable::HashTable(HashTable& table) {
@@ -114,28 +130,27 @@ HashTable::HashTable(HashTable& table) {
 }
 
 void HashTable::copy_from(HashTable& table) {
-    table.print_table();
     this->free_table();
-    this->array = (node**)malloc(table.capacity * sizeof(node*));
-    this->size = 0;
+    this->array.clear();
     this->capacity = table.capacity;
+    this->array.resize(this->capacity, nullptr);
+    this->num_entries = 0;
+    this->num_items = 0;
     node* ptr;
     for (int i = 0; i < table.capacity; i++) {
         ptr = table.array[i];
-        while (ptr != NULL) {
+        while (ptr != nullptr) {
             this->insert(*ptr);
-            // this->print_table();
             ptr = ptr->next;
         }
     }
-    this->print_table();
 }
 
 void HashTable::free_chain(node* base) {
-    if (base == NULL) return;
+    if (base == nullptr) return;
     node* ptr;
-    while (base->next != NULL) {
-        if (base->next->next == NULL) {
+    while (base->next != nullptr) {
+        if (base->next->next == nullptr) {
             delete base->next;
             break;
         }
@@ -144,6 +159,7 @@ void HashTable::free_chain(node* base) {
         delete ptr;
     }
     delete base;
+    base = nullptr;
 }
 
 void HashTable::free_table() {
@@ -160,26 +176,67 @@ HashTable& HashTable::operator=(HashTable& table) {
     return *this;
 }
 
-int HashTable::hash(const state& key) {
-    return (((int) key.i) + ((int) key.j) + ((int) key.k)) % this->capacity;
+unsigned int HashTable::hash(const state& key) const {
+    unsigned h = 0;
+    h = h * 101 + (unsigned) key.i;
+    h = h * 101 + (unsigned) key.j;
+    h = h * 101 + (unsigned) key.k;
+    return h % this->capacity;
 }
 
-float HashTable::lookup(const state& key) {
-    node* ptr = this->array[hash(key)];
-    while (ptr->key != key) {
-        if (ptr->next == NULL) {
-            throw std::out_of_range("Item not found.\n");
-        }
-        ptr = ptr->next;
+node& HashTable::find_node(const state& key) const {
+    int index = hash(key);
+    node* ptr = this->array[index];
+    if (ptr == nullptr) 
+        throw std::runtime_error("[remove] Error: key: " + get_string(key) + " not found.");
+    else if (ptr->key == key) {
+        return *ptr;
     }
-    return ptr->value;
+    else if (ptr->next == nullptr)  // if this item not the key but the only item in the list
+        throw std::runtime_error("[remove] Error: key: " + get_string(key) + " not found.");
+    else if (ptr->next != nullptr) {
+        ptr = ptr->next;
+        while (ptr != nullptr) {
+            if (ptr->key == key) {
+                return *ptr;
+            }
+            ptr = ptr->next;
+        }
+    }
+    throw std::runtime_error("[remove] Error: key: "+ get_string(key) + " not found.");
+}
+
+bool HashTable::in_table(const state& key) const {
+    int index = hash(key);
+    node* ptr = this->array[index];
+    if (ptr == nullptr) 
+        return false;
+    else if (ptr->key == key) {
+        return true;
+    }
+    else if (ptr->next == nullptr)  // if this item not the key but the only item in the list
+        return false;
+    else if (ptr->next != nullptr) {
+        ptr = ptr->next;
+        while (ptr != nullptr) {
+            if (ptr->key == key) {
+                return true;
+            }
+            ptr = ptr->next;
+        }
+    }
+    return false;
+}
+
+int HashTable::find_val(const state& key) const {
+    return this->find_node(key).value;
 }
 
 void HashTable::rehash_to(HashTable& table) {
     node* ptr;
     for (int i = 0; i < this->capacity; i++) {
         ptr = this->array[i];
-        while (ptr != NULL) {
+        while (ptr != nullptr) {
             table.insert(*ptr);
             ptr = ptr->next;
         }
@@ -193,85 +250,74 @@ void HashTable::expand() {
 }
 
 void HashTable::insert(node& input) {
-    if (this->size == capacity) this->expand(); // increases hash table size if needed
+    if (this->in_table(input.key)) 
+        throw std::runtime_error("[insert] Error: duplicate key found: " + get_string(input));
+    if (this->num_entries == capacity) this->expand(); // increases hash table size if needed
     int index = hash(input.key);
     node* ptr = this->array[index];
-    if (ptr == NULL) {
+    this->num_items++;
+    if (ptr == nullptr) {
         this->array[index] = new node(input);
-        this->size++;
+        this->num_entries++;
         return;
     }
-    while (ptr != NULL and ptr->next != NULL) ptr = ptr->next;
+    while (ptr != nullptr && ptr->next != nullptr) ptr = ptr->next;
     ptr->next = new node(input);
 }
 
 void HashTable::insert(node&& input) {
-    if (this->size == capacity) this->expand(); // increases hash table size if needed
-     int index = hash(input.key);
+    if (this->num_items != 0 && this->in_table(input.key)) 
+        throw std::runtime_error("[insert] Error: duplicate key found: " + get_string(input));
+    if (this->num_entries == capacity) this->expand(); // increases hash table size if needed
+    unsigned int index = hash(input.key);
     node* ptr = this->array[index];
-    if (ptr == NULL) {
+    this->num_items++;
+    if (ptr == nullptr) {
         this->array[index] = new node(input);
-        this->size++;
+        this->num_entries++;
         return;
-    }
-    while (ptr != NULL and ptr->next != NULL) ptr = ptr->next;
+    }    
+    while (ptr != nullptr && ptr->next != nullptr) ptr = ptr->next;
     ptr->next = new node(input);
 }
 
-void HashTable::insert(const state& key, const float value) { 
-    node input{key, value};
-    if (this->size == capacity) this->expand(); // increases hash table size if needed
-    int index = hash(input.key);
-    node* ptr = this->array[index];
-    if (ptr == NULL) {
-        this->array[index] = new node(input);
-        this->size++;
-        return;
-    }
-    while (ptr != NULL and ptr->next != NULL) ptr = ptr->next;
-    ptr->next = new node(input);
-}
-
-void HashTable::insert(const state&& key, const float value) { 
-    node input{key, value};
-    if (this->size == capacity) this->expand(); // increases hash table size if needed
-    int index = hash(input.key);
-    node* ptr = this->array[index];
-    if (ptr == NULL) {
-        this->array[index] = new node(input);
-        this->size++;
-        return;
-    }
-    while (ptr != NULL and ptr->next != NULL) ptr = ptr->next;
-    ptr->next = new node(input);
-}
-
-bool HashTable::remove(const state& key) {
+void HashTable::remove(const state& key) {
     int index = hash(key);
     node* ptr = this->array[index];
-    node* prev = this->array[index];
-    if (ptr == NULL) return false;
-    while (ptr->next != NULL) {
-        if (ptr->next->key == key) {
-            delete &ptr->next->key;
-            ptr->next = NULL;
-            this->size--;
-            return true;
-        }
-        ptr = ptr->next;
+    node* prev;
+    if (ptr == nullptr) 
+        throw std::runtime_error("[remove] Error: key: "+ get_string(key) + " not found.");
+    else if (ptr->key == key) {
+        this->array[index] = ptr->next;
+        free(ptr);
+        return;
     }
-    return false;
+    else if (ptr->next == nullptr)  // if this item not the key but the only item in the list
+        throw std::runtime_error("[remove] Error: key: "+ get_string(key) + " not found.");
+    else if (ptr->next != nullptr) {
+        prev = ptr;
+        ptr = ptr->next;
+        while (ptr != nullptr) {
+            if (ptr->key == key) {
+                prev->next = ptr->next;
+                free(ptr);
+                return;
+            }
+            ptr = ptr->next;
+        }
+    }
+    throw std::runtime_error("[remove] Error: key: "+ get_string(key) + " not found.");
 }
 
-void HashTable::print_chain(const node* head) {
-    if (head == NULL) {
+void HashTable::print_chain(const node* head) const {
+    if (head == nullptr) {
         std::cout << "(empty)";
         return;
     }
     const node* ptr = head;
-    while (ptr != NULL) {
+    while (ptr != nullptr) {
         std::cout << ptr->key << "(" << ptr->value << ")";
-        if (ptr->next != NULL) {
+        if (ptr->next != nullptr) {
             std::cout << " -> ";
         }
         ptr = ptr->next;
@@ -279,9 +325,9 @@ void HashTable::print_chain(const node* head) {
 }
 
 
-void HashTable::print_table() {
+void HashTable::print_table() const {
     std::cout << "HashTable (capacity = " << this->capacity
-              << ", size = " << this->size << ")\n";
+              << ", num_entries = " << this->num_entries << ", num_items = " << this->num_items << ")\n";
     std::cout << "--------------------------------------------------\n";
 
     for (int i = 0; i < this->capacity; ++i) {
@@ -295,6 +341,6 @@ void HashTable::print_table() {
     std::cout << "--------------------------------------------------\n";
 }
 
-int HashTable::get_table_size() {
-    return this->size;
+int HashTable::get_num_entries() const {
+    return this->num_entries;
 }

@@ -1,3 +1,3 @@
 #! /bin/sh
 
-cd ../build ; ./bin/HASH ; cd ../scripts
+cd ../build/bin ; ./main
