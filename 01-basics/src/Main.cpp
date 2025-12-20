@@ -8,7 +8,8 @@ int main() {
     // table.insert(*input);
     // table.print_table();
 
-    HashTable table{3};
+    // HashTable table{3};
+    HashTable table = HashTable(3);
 
     state s{1, 2, 3};
     print_state(s);
@@ -44,6 +45,10 @@ int main() {
     std::cout << table.get_table_size() << std::endl;
 
     std::cout << table.lookup(state(46, 453, 452)) << std::endl;;
+
+    std::cout << table.remove(state(16, 453, 452)) << std::endl;
+
+    table.print_table();
 }
 
 // TODO: implement custom iterator to abstract things further

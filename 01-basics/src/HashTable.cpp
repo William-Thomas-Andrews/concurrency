@@ -249,9 +249,15 @@ void HashTable::insert(const state&& key, const float value) {
 bool HashTable::remove(const state& key) {
     int index = hash(key);
     node* ptr = this->array[index];
+    node* prev = this->array[index];
     if (ptr == NULL) return false;
     while (ptr->next != NULL) {
-        if (ptr->key == key) return true;
+        if (ptr->next->key == key) {
+            delete &ptr->next->key;
+            ptr->next = NULL;
+            this->size--;
+            return true;
+        }
         ptr = ptr->next;
     }
     return false;
