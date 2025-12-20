@@ -12,8 +12,9 @@ struct state {
     ~state();
 };
 
+std::string get_string(state& state);
+std::string get_string(const state& state);
 std::ostream& operator<<(std::ostream& out, const state& input);
-
 void print_state(state& s);
 void print_state(const state& s);
 
@@ -28,10 +29,11 @@ struct node {
     ~node();
 };
 
+std::string get_string(node& input);
+std::string get_string(const node& input);
 bool operator==(const state op1, const state op2);
 bool operator!=(const state op1, const state op2);
 std::ostream& operator<<(std::ostream& out, const node& input);
-
 void print_node(const node* input);
 
 class HashTable {
@@ -51,14 +53,14 @@ class HashTable {
         ~HashTable();
         HashTable& operator=(HashTable& table);
         int hash(const state& key);
-        float lookup(const state& key);
+        node& find_node(const state& key);
+        bool in_table(const state& key);
+        float find_val(const state& key);
         void rehash_to(HashTable& table);
         void expand();
         void insert(node& input);
         void insert(node&& input);
-        void insert(const state& key, const float value);
-        void insert(const state&& key, const float value);
-        bool remove(const state& key);
+        void remove(const state& key);
         void print_chain(const node* head);
         void print_table();
         int get_num_entries();

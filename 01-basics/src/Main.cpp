@@ -20,7 +20,7 @@ int main() {
     table.print_table();
 
     node input2{s, 11.0f};
-    table.insert(input2);
+    // table.insert(input2);
 
     table.print_table();
 
@@ -44,9 +44,11 @@ int main() {
     
     std::cout << table.get_num_entries() << std::endl;
 
-    std::cout << table.lookup(state(46, 453, 452)) << std::endl;;
+    std::cout << table.find_node(state(46, 453, 452)) << std::endl;;
 
-    std::cout << table.remove(state(16, 453, 452)) << std::endl;
+    table.remove(state(46, 453, 452));
+
+    table.remove(state(8, 453, 452));
 
     table.print_table();
 }
