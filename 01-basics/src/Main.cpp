@@ -19,13 +19,8 @@ int main() {
 
     // table.print_table();
 
-<<<<<<< HEAD
-    node input2{s, 11.0f};
-    // table.insert(input2);
-=======
     // node input2{s, 11.0f};
     // // table.insert(input2);
->>>>>>> feature/add-expasnion-property
 
     // table.print_table();
 
@@ -49,15 +44,9 @@ int main() {
     
     std::cout << table.get_num_entries() << std::endl;
 
-<<<<<<< HEAD
-    std::cout << table.find_node(state(46, 453, 452)) << std::endl;;
-
-    table.remove(state(46, 453, 452));
-=======
     std::cout << table.find_node(state(449,601,290)) << std::endl;;
 
     table.remove(state(449,601,290));
->>>>>>> feature/add-expasnion-property
 
     table.remove(state(8, 453, 452));
 
