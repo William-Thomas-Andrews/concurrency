@@ -1,26 +1,31 @@
 cmake_minimum_required(VERSION 3.22.1)
-
-project(HASH CXX)
+project(HashTableProject)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Add compile warnings
+if (MSVC)
+    add_compile_options(/W4 /WX)
+else()
+    add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+endif()
+
+# Set output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-
-# Collect C source files
-file(GLOB_RECURSE CXX_SRC_FILES src/*.cpp)
-
-# Create executable with both C++ files
-add_executable(HASH
-    ${CXX_SRC_FILES}
+# Library target
+add_library(hashtable_lib
+    src/HashTable.cpp
 )
+target_include_directories(hashtable_lib PUBLIC include)
 
-set(BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
-set(BUILD_BENCHMARKS OFF CACHE INTERNAL "" FORCE)
+# Main executable
+add_executable(main src/Main.cpp)
+target_link_libraries(main hashtable_lib)
 
-target_include_directories(HASH
-    PUBLIC ${CMAKE_SOURCE_DIR}/src
-    PUBLIC ${CMAKE_SOURCE_DIR}/include
-)
+# Enable testing
+enable_testing()
+add_subdirectory(test)
