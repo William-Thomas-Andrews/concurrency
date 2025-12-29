@@ -46,7 +46,7 @@ TEST_F(HashTableInsertTests, DuplicateKeyBehavior) {
     small_table->insert(n1);
 
     node n2(s, 200);
-    // Your implementation throws on duplicate keys
+    // Throws on duplicate keys
     EXPECT_THROW(small_table->insert(n2), std::runtime_error);
 }
 
@@ -73,7 +73,7 @@ TEST_F(HashTableInsertTests, InsertNodeObject) {
 
 TEST_F(HashTableInsertTests, CollisionHandling) {
     // Create states that hash to same bucket
-    // (depends on your hash function)
+    // (depends on the hash function)
     state s1(0, 0, 0);
     state s2(4, 0, 0); // With capacity 4, these might collide
 
@@ -82,4 +82,11 @@ TEST_F(HashTableInsertTests, CollisionHandling) {
 
     EXPECT_EQ(small_table->find_val(s1), 111);
     EXPECT_EQ(small_table->find_val(s2), 222);
+}
+
+TEST_F(HashTableInsertTests, DuplicateKeyInsert) {
+    state s1(0,0,0);
+    state s2(0,0,0);
+    small_table->insert(node(s1, 0));
+    EXPECT_THROW(small_table->insert(node(s2, 1)), std::runtime_error);
 }

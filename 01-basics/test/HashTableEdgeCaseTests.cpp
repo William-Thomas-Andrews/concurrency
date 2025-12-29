@@ -77,21 +77,55 @@ class HashTableParameterizedTests :
     public ::testing::WithParamInterface<int> {
 protected:
     void SetUp() override {
-        // Setup done per test
+        // Setup done in each test
     }
     void TearDown() override {
-        // Cleanup done per test
+        // Cleanup done in each test
     }
 };
 
 TEST_P(HashTableParameterizedTests, VariousCapacities) {
     int capacity = GetParam();
+    // std::cout << "[DEBUG] Param: " << capacity << std::endl;
     HashTable table(capacity);
 
     state s(1, 2, 3);
     table.insert(node(s, 100));
 
     EXPECT_EQ(table.find_val(s), 100);
+}
+
+TEST_P(HashTableParameterizedTests, VariousStates) {
+    int capacity = 10;
+    HashTable table(capacity);
+
+    state s(UINT16_MAX - GetParam() - (rand() % 101), UINT16_MAX - GetParam() - (rand() % 101), UINT16_MAX - GetParam() - (rand() % 101));
+    table.insert(node(s, 100));
+
+    EXPECT_EQ(table.find_val(s), 100);
+}
+
+TEST_P(HashTableParameterizedTests, LargeScaleInsertionAndRemoval) {
+    int capacity = 10;
+    HashTable table(capacity);
+    int amount_items = 100000;
+    state s;
+    std::vector<state> recorded_states;
+    recorded_states.reserve(amount_items);
+
+    for (int i = 0; i < amount_items; i++) {
+        s = state(UINT16_MAX - GetParam() - i, UINT16_MAX - GetParam() - i, UINT16_MAX - GetParam() - i);
+        table.insert(node(s, 100));
+        recorded_states[i] = s;
+    }
+
+    for (int i = 0; i < amount_items; i++)
+        EXPECT_EQ(table.find_val(recorded_states[i]), 100);
+
+    for (int i = 0; i < amount_items; i++) {
+        table.remove(recorded_states[i]);
+        EXPECT_THROW(table.find_val(recorded_states[i]), std::runtime_error);
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(

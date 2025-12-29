@@ -52,9 +52,3 @@ int main() {
 
     table.print_table();
 }
-
-// TODO: implement custom iterator to abstract things further
-// TODO: Make sure all functions including removal work
-// TODO: Add iterative hashing and test
-// TODO: Add concurrency
-// TODO: Add more concurrent methods and compare results

@@ -31,13 +31,8 @@ struct node {
 
 std::string get_string(node& input);
 std::string get_string(const node& input);
-<<<<<<< HEAD
-bool operator==(const state op1, const state op2);
-bool operator!=(const state op1, const state op2);
-=======
 bool operator==(const state& op1, const state& op2);
 bool operator!=(const state& op1, const state& op2);
->>>>>>> feature/add-expasnion-property
 std::ostream& operator<<(std::ostream& out, const node& input);
 void print_node(const node* input);
 
@@ -57,29 +52,16 @@ class HashTable {
         void free_table();
         ~HashTable();
         HashTable& operator=(HashTable& table);
-<<<<<<< HEAD
-        int hash(const state& key);
-        node& find_node(const state& key);
-        bool in_table(const state& key);
-        float find_val(const state& key);
-=======
         unsigned int hash(const state& key) const;
         node& find_node(const state& key) const;
         bool in_table(const state& key) const;
         int find_val(const state& key) const;
->>>>>>> feature/add-expasnion-property
         void rehash_to(HashTable& table);
         void expand();
         void insert(node& input);
         void insert(node&& input);
         void remove(const state& key);
-<<<<<<< HEAD
-        void print_chain(const node* head);
-        void print_table();
-        int get_num_entries();
-=======
         void print_chain(const node* head) const;
         void print_table() const;
         int get_num_entries() const;
->>>>>>> feature/add-expasnion-property
 };
