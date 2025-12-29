@@ -34,6 +34,7 @@ struct node {
 struct Bucket {
     node* head;
     std::shared_mutex lock;
+    Bucket(); // 0. Default Constructor
     Bucket(node* node); // 1. Normal Constructor
     ~Bucket(); // 2. Destructor
     Bucket(const Bucket& other); // 3. Copy Constructor

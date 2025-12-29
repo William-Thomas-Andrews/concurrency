@@ -108,6 +108,8 @@ std::ostream& operator<<(std::ostream& out, const node& input) {
 }
 
 
+// 0. Default Constructor
+Bucket::Bucket() = default;
 
 // 1. Normal Constructor
 Bucket::Bucket(node* node) {
@@ -121,20 +123,33 @@ Bucket::~Bucket() {
 
 // 3. Copy Constructor
 Bucket::Bucket(const Bucket& other) {
-;
+    this->free_bucket();
+    node* ptr = other.head;
+    this->head = new node(*ptr);
+    node* cur = this->head;
+    while (ptr != nullptr) {
+        cur->next = new node(*ptr);
+        ptr = ptr->next;
+    }
 }
 
 // 4. Copy Assignment Operator
 Bucket& Bucket::operator=(const Bucket& other) {
-    ;
+    this->free_bucket();
+    node* ptr = other.head;
+    this->head = new node(*ptr);
+    node* cur = this->head;
+    while (ptr != nullptr) {
+        cur->next = new node(*ptr);
+        ptr = ptr->next;
+    }
+    return *this;
 }
 
 // 5. Move Constructor
 Bucket::Bucket(Bucket&& other) noexcept : head(std::exchange(other.head, nullptr)) {
     // transfers ownership and leaves the source in a valid, empty state
 }
-
-
 
 void Bucket::print_bucket() const {
     print_chain(this->head);
@@ -179,7 +194,8 @@ void HashTable::copy_from(HashTable& table) {
 }
 
 void HashTable::free_table() {
-    for (int i = 0; i < this->capacity; i++) this->array[i].free_bucket();
+//     // for (int i = 0; i < this->capacity; i++) this->array[i].free_bucket(); // DEPRECATED
+    this->array.clear();
 }
 
 HashTable::~HashTable() {
