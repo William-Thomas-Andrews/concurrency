@@ -94,10 +94,8 @@ Bucket::~Bucket() {
 
 // 3. Copy Constructor
 Bucket::Bucket(const Bucket& other) {
-    std::cout << "here" << std::endl;
     free_bucket();
     node* ptr = other.head.get();
-    std::cout << "here" << std::endl;
     if (ptr == nullptr) return;
     head = std::make_unique<node>(*ptr);
     node* cur = head.get();
@@ -181,46 +179,42 @@ HashTable::HashTable(int cap) : num_entries(0), num_items(0), capacity(cap) {
     array.resize(capacity);
 }
 
-// 2. Destructor
-HashTable::~HashTable() {
-    free_table();
-}
+// // 2. Destructor
+// HashTable::~HashTable() {
+//     free_table();
+// }
 
-// 3. Copy Constructor
-HashTable::HashTable(const HashTable& other) {
-    copy_from(other);
-}
+// // 3. Copy Constructor
+// HashTable::HashTable(const HashTable& other) : 
+//     array(other.array), 
+//     num_entries(other.num_entries), 
+//     num_items(other.num_items), 
+//     capacity(other.capacity) 
+//     {}
 
-// 4. Copy Assignment Operator
-HashTable& HashTable::operator=(const HashTable& other) {
-    copy_from(other);
-    return *this;
-}
+// // 4. Copy Assignment Operator
+// HashTable& HashTable::operator=(const HashTable& other) {
+//     copy_from(other);
+//     return *this;
+// }
 
-// 5. Move Constructor
-HashTable::HashTable(HashTable&& other) noexcept {
-    num_entries = other.num_entries;
-    num_items = other.num_items;
-    capacity = other.capacity;
-    array = std::move(other.array);
-}
+// // 5. Move Constructor
+// HashTable::HashTable(HashTable&& other) noexcept {
+//     num_entries = other.num_entries;
+//     num_items = other.num_items;
+//     capacity = other.capacity;
+//     array = std::move(other.array);
+// }
 
-// 6. Move Assignment Operator
-HashTable& HashTable::operator=(HashTable&& other) noexcept {
-    num_entries = other.num_entries;
-    num_items = other.num_items;
-    capacity = other.capacity;
-    array = std::move(other.array);
-    return *this;
-}
+// // 6. Move Assignment Operator
+// HashTable& HashTable::operator=(HashTable&& other) noexcept {
+//     num_entries = other.num_entries;
+//     num_items = other.num_items;
+//     capacity = other.capacity;
+//     array = std::move(other.array);
+//     return *this;
+// }
 
-void HashTable::copy_from(const HashTable& other) {
-    free_table();
-    capacity = other.capacity;
-    array.resize(capacity);
-    for (int i = 0; i < other.capacity; i++)
-        array[i] = other.array[i]; // Bucket copy assignment
-}
 
 void HashTable::free_table() {
     array.clear();
@@ -237,7 +231,7 @@ unsigned int HashTable::hash(const state& key) const {
 }
 
 node& HashTable::find_node(const state& key) const {
-    if (num_entries == 0) throw std::runtime_error("[find_node] Error: key: "+ get_string(key) + " not found. Errno 1");
+    if (num_entries == 0) throw std::runtime_error("[find_node] Error: key: " + get_string(key) + " not found. Errno 1");
     unsigned index = hash(key);
     node* ptr = array[index].head.get();
     if (ptr == nullptr) throw std::runtime_error("[find_node] Error: key: " + get_string(key) + " not found. Errno 2");
@@ -251,7 +245,7 @@ node& HashTable::find_node(const state& key) const {
             ptr = ptr->next.get();
         }
     }
-    throw std::runtime_error("[find_node] Error: key: "+ get_string(key) + " not found. Errno 4");
+    throw std::runtime_error("[find_node] Error: key: " + get_string(key) + " not found. Errno 4");
 }
 
 bool HashTable::in_table(const state& key) const {
@@ -305,7 +299,7 @@ void HashTable::rehash_to(HashTable& table) {
 void HashTable::expand() {
     HashTable temp = HashTable(capacity * 2);
     rehash_to(temp);
-    copy_from(temp);;
+    *this = temp;
 }
 
 void HashTable::insert(node& input) {

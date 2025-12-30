@@ -60,12 +60,11 @@ class HashTable {
     public:
         HashTable(); // 0. Default Constructor
         HashTable(int capacity); // 1. Normal Constructor
-        ~HashTable(); // 2. Destructor
-        HashTable(const HashTable& other); // 3. Copy Constructor
-        HashTable& operator=(const HashTable& other); // 4. Copy Assignment Operator
-        HashTable(HashTable&& other) noexcept; // 5. Move Constructor
-        HashTable& operator=(HashTable&& other) noexcept; // 6. Move Assignment Operator
-        void copy_from(const HashTable& other);
+        ~HashTable() = default; // 2. Destructor
+        HashTable(const HashTable& other) = default; // 3. Copy Constructor
+        HashTable& operator=(const HashTable& other) = default; // 4. Copy Assignment Operator
+        HashTable(HashTable&& other) noexcept = default; // 5. Move Constructor
+        HashTable& operator=(HashTable&& other) noexcept = default; // 6. Move Assignment Operator
         void free_table();
         unsigned int hash(const state& key) const;
         node& find_node(const state& key) const;

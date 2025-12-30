@@ -54,6 +54,7 @@ TEST_F(HashTableInsertTests, InsertTriggersExpansion) {
     for (int i = 0; i < 20; ++i) {
         state s(i, i, i);
         small_table->insert(node(s, i));
+        small_table->print_table();
     }
 
     // Verify all items still accessible after expansion
