@@ -4,11 +4,7 @@
 
 state::state() = default;
 
-state::state(int i, int j, int k) {
-    this->i = i;
-    this->j = j;
-    this->k = k;
-}
+state::state(int i, int j, int k) : i(i), j(j), k(k) {}
 
 state::~state() {}
 
@@ -22,10 +18,10 @@ bool operator!=(const state& op1, const state& op2) {
     return true;
 }
 
-state& state::operator=(const state& other_state) {
-    this->i = other_state.i;
-    this->j = other_state.j;
-    this->k = other_state.k;
+state& state::operator=(const state& other) {
+    i = other.i;
+    j = other.j;
+    k = other.k;
     return *this;
 }
 
@@ -56,9 +52,9 @@ void print_state(const state& s) {
 
 
 node& node::operator=(const node& other_node) {
-    this->key = other_node.key;
-    this->value = other_node.value;
-    this->next = nullptr;
+    key = other_node.key;
+    value = other_node.value;
+    next = nullptr;
     return *this;
 }
 
@@ -66,16 +62,16 @@ node::node() {
     ;
 }
 
-node::node(const state& key, int value) {
-    this->key = key;
-    this->value = value;
-    this->next = nullptr;
+node::node(const state& other_key, int other_value) {
+    key = other_key;
+    value = other_value;
+    next = nullptr;
 }
 
 node::node(const node& input) {
-    this->key = input.key;
-    this->value = input.value;
-    this->next = nullptr;
+    key = input.key;
+    value = input.value;
+    next = nullptr;
 }
 
 node::~node() {}
@@ -109,24 +105,26 @@ std::ostream& operator<<(std::ostream& out, const node& input) {
 
 
 // 0. Default Constructor
-Bucket::Bucket() = default;
+Bucket::Bucket() {
+    head = nullptr;
+}
 
 // 1. Normal Constructor
 Bucket::Bucket(node* node) {
-    this->head = node;
+    head = node;
 }
 
 // 2. Destructor
 Bucket::~Bucket() {
-    this->free_bucket();
+    free_bucket();
 }
 
 // 3. Copy Constructor
 Bucket::Bucket(const Bucket& other) {
-    this->free_bucket();
+    free_bucket();
     node* ptr = other.head;
-    this->head = new node(*ptr);
-    node* cur = this->head;
+    head = new node(*ptr);
+    node* cur = head;
     while (ptr != nullptr) {
         cur->next = new node(*ptr);
         ptr = ptr->next;
@@ -135,10 +133,10 @@ Bucket::Bucket(const Bucket& other) {
 
 // 4. Copy Assignment Operator
 Bucket& Bucket::operator=(const Bucket& other) {
-    this->free_bucket();
+    free_bucket();
     node* ptr = other.head;
-    this->head = new node(*ptr);
-    node* cur = this->head;
+    head = new node(*ptr);
+    node* cur = head;
     while (ptr != nullptr) {
         cur->next = new node(*ptr);
         ptr = ptr->next;
@@ -151,12 +149,18 @@ Bucket::Bucket(Bucket&& other) noexcept : head(std::exchange(other.head, nullptr
     // transfers ownership and leaves the source in a valid, empty state
 }
 
+// 6. Move Assignment Operator
+Bucket& Bucket::operator=(Bucket&& other) noexcept { 
+    // transfers ownership and leaves the source in a valid, empty state
+    head = std::exchange(other.head, nullptr);
+}
+
 void Bucket::print_bucket() const {
-    print_chain(this->head);
+    print_chain(head);
 }
 
 void Bucket::free_bucket() {
-    free_chain(this->head);
+    free_chain(head);
 }
 
 bool Bucket::empty() {
@@ -165,47 +169,67 @@ bool Bucket::empty() {
 
 
 
+// ------------------------------------------------------------------
+// HashTable Implementation
 
+// 0. Default Constructor
 HashTable::HashTable() : num_entries(0), num_items(0), capacity(16) {
-    this->array.resize(this->capacity);
+    array.resize(capacity);
 }
 
+// 1. Normal Constructor
 HashTable::HashTable(int cap) : num_entries(0), num_items(0), capacity(cap) {
-    this->array.resize(this->capacity);
+    array.resize(capacity);
 }
 
-HashTable::HashTable(HashTable& table) {
-    this->copy_from(table);
+// 2. Destructor
+HashTable::~HashTable() {
+    free_table();
+}
+
+// 3. Copy Constructor
+HashTable::HashTable(const HashTable& other) {
+    copy_from(other);
+}
+
+// 4. Copy Assignment Operator
+HashTable& HashTable::operator=(const HashTable& other) {
+
+}
+
+// 5. Move Constructor
+HashTable::HashTable(HashTable&& other) noexcept {
+
+}
+
+// 6. Move Assignment Operator
+HashTable& HashTable::operator=(HashTable&& other) noexcept {
+
 }
 
 void HashTable::copy_from(HashTable& table) {
-    this->free_table();
-    this->capacity = table.capacity;
-    this->array.resize(this->capacity);
+    free_table();
+    capacity = table.capacity;
+    array.resize(capacity);
     node* ptr;
     for (int i = 0; i < table.capacity; i++) {
         ptr = table.array[i].head;
         while (ptr != nullptr) {
-            this->insert(*ptr);
+            insert(*ptr);
             ptr = ptr->next;
         }
     }
 }
 
 void HashTable::free_table() {
-//     // for (int i = 0; i < this->capacity; i++) this->array[i].free_bucket(); // DEPRECATED
-    this->array.clear();
-    this->num_entries = 0;
-    this->num_items = 0;
-}
-
-HashTable::~HashTable() {
-    this->free_table();
+    for (int i = 0; i < capacity; i++) array[i].free_bucket(); 
+    num_entries = 0;
+    num_items = 0;
 }
 
 HashTable& HashTable::operator=(HashTable& table) {
-    this->free_table();
-    this->copy_from(table);
+    free_table();
+    copy_from(table);
     return *this;
 }
 
@@ -214,14 +238,14 @@ unsigned int HashTable::hash(const state& key) const {
     h = h * 101 + (unsigned) key.i;
     h = h * 101 + (unsigned) key.j;
     h = h * 101 + (unsigned) key.k;
-    return h % this->capacity;
+    return h % capacity;
 }
 
 node& HashTable::find_node(const state& key) const {
-    if (this->num_entries == 0) 
+    if (num_entries == 0) 
         throw std::runtime_error("[find_node] Error: key: "+ get_string(key) + " not found. Errno 1");
     unsigned index = hash(key);
-    node* ptr = this->array[index].head;
+    node* ptr = array[index].head;
     if (ptr == nullptr) {
         throw std::runtime_error("[find_node] Error: key: " + get_string(key) + " not found. Errno 2");
     }
@@ -243,7 +267,7 @@ node& HashTable::find_node(const state& key) const {
 
 bool HashTable::in_table(const state& key) const {
     int index = hash(key);
-    node* ptr = this->array[index].head;
+    node* ptr = array[index].head;
     if (ptr == nullptr) 
         return false;
     else if (ptr->key == key) {
@@ -263,7 +287,8 @@ bool HashTable::in_table(const state& key) const {
 }
 
 bool HashTable::in_table(const state& key, int index) const {
-    node* ptr = this->array[index].head;
+    std::cout << "yep" << std::endl;
+    node* ptr = array[index].head;
     if (ptr == nullptr) 
         return false;
     else if (ptr->key == key) {
@@ -283,13 +308,13 @@ bool HashTable::in_table(const state& key, int index) const {
 }
 
 int HashTable::find_val(const state& key) const {
-    return this->find_node(key).value;
+    return find_node(key).value;
 }
 
 void HashTable::rehash_to(HashTable& table) {
     node* ptr;
-    for (int i = 0; i < this->capacity; i++) {
-        ptr = this->array[i].head;
+    for (int i = 0; i < capacity; i++) {
+        ptr = array[i].head;
         while (ptr != nullptr) {
             table.insert(*ptr);
             ptr = ptr->next;
@@ -298,61 +323,69 @@ void HashTable::rehash_to(HashTable& table) {
 }
 
 void HashTable::expand() {
-    HashTable temp = HashTable(this->capacity * 2);
-    this->rehash_to(temp);
-    this->copy_from(temp);;
+    HashTable temp = HashTable(capacity * 2);
+    rehash_to(temp);
+    copy_from(temp);;
 }
 
 void HashTable::insert(node& input) {
-    unsigned index = this->hash(input.key);
-    // std::unique_lock<std::shared_mutex> lock(this->lock_array[index]);
-    if (this->in_table(input.key, index)) 
-        throw std::runtime_error("[insert] Error: duplicate key found: " + get_string(input));
-    if (this->num_entries == capacity) {
-        this->expand(); // increases hash table size
-        index = this->hash(input.key); // rehash
+    unsigned index = hash(input.key);
+    // std::unique_lock<std::shared_mutex> lock(array[index].lock);
+    if (num_entries == capacity) {
+        expand(); // increases hash table size
+        index = hash(input.key); // rehash
     }
-    node* ptr = this->array[index].head;
-    this->num_items++;
+    node* ptr = array[index].head;
+    num_items++;
     if (ptr == nullptr) {
-        this->array[index].head = new node(input);
-        this->num_entries++;
+        array[index].head = new node(input);
+        num_entries++;
         return;
     }
-    while (ptr != nullptr && ptr->next != nullptr) ptr = ptr->next;
+    if (ptr->key == input.key) 
+        throw std::runtime_error("[insert] Error: duplicate key found: " + get_string(input));
+    while (ptr != nullptr && ptr->next != nullptr) {
+        ptr = ptr->next;
+        if (ptr->key == input.key) 
+            throw std::runtime_error("[insert] Error: duplicate key found: " + get_string(input));
+    }
     ptr->next = new node(input);
     // lock automatically unlocks when going out of scope
 }
 
 void HashTable::insert(node&& input) {
-    unsigned index = this->hash(input.key);
-    // std::unique_lock<std::shared_mutex> lock(this->lock_array[index]);
-    if (this->num_items != 0 && this->in_table(input.key, index)) 
-        throw std::runtime_error("[insert] Error: duplicate key found: " + ::get_string(input));
-    if (this->num_entries == capacity) {
-        this->expand(); // increases hash table size
-        index = this->hash(input.key); // rehash
+    unsigned index = hash(input.key);
+    // std::unique_lock<std::shared_mutex> lock(array[index].lock);
+    if (num_entries == capacity) {
+        expand(); // increases hash table size
+        index = hash(input.key); // rehash
     }
-    node* ptr = this->array[index].head;
-    this->num_items++;
+    node* ptr = array[index].head;
+    num_items++;
     if (ptr == nullptr) {
-        this->array[index].head = new node(input);
-        this->num_entries++;
+        array[index].head = new node(input);
+        num_entries++;
         return;
     }    
-    while (ptr != nullptr && ptr->next != nullptr) ptr = ptr->next;
+    if (ptr->key == input.key) 
+        throw std::runtime_error("[insert] Error: duplicate key found: " + get_string(input));
+    while (ptr != nullptr && ptr->next != nullptr) {
+        ptr = ptr->next;
+        if (ptr->key == input.key) 
+            throw std::runtime_error("[insert] Error: duplicate key found: " + get_string(input));
+    }
     ptr->next = new node(input);
     // lock automatically unlocks when going out of scope
 }
 
 void HashTable::remove(const state& key) {
     int index = hash(key);
-    node* ptr = this->array[index].head;
+    node* ptr = array[index].head;
     node* prev;
     if (ptr == nullptr) 
         throw std::runtime_error("[remove] Error: key: " + get_string(key) + " not found. Errno 1");
     else if (ptr->key == key) {
-        this->array[index].head = ptr->next;
+        array[index].head = ptr->next;
         free(ptr);
         return;
     }
@@ -374,15 +407,15 @@ void HashTable::remove(const state& key) {
 }
 
 void HashTable::print_table() const {
-    std::cout << "HashTable (capacity = " << this->capacity
-              << ", num_entries = " << this->num_entries << ", num_items = " << this->num_items << ")\n";
+    std::cout << "HashTable (capacity = " << capacity
+              << ", num_entries = " << num_entries << ", num_items = " << num_items << ")\n";
     std::cout << "--------------------------------------------------\n";
 
-    for (int i = 0; i < this->capacity; ++i) {
+    for (int i = 0; i < capacity; ++i) {
         std::cout << "[ ";
         if (i < 10) std::cout << " ";   // alignment for single-digit indices
         std::cout << i << " ] : ";
-        this->array[i].print_bucket();
+        array[i].print_bucket();
         std::cout << '\n';
     }
 
@@ -390,7 +423,7 @@ void HashTable::print_table() const {
 }
 
 int HashTable::get_num_entries() const {
-    return this->num_entries;
+    return num_entries;
 }
 
 

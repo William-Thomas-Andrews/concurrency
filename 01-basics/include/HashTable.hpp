@@ -8,7 +8,7 @@
 
 struct state {
     int i, j, k;
-    state& operator=(const state& other_state);
+    state& operator=(const state& other);
     state();
     state(int i, int j, int k);
     ~state();
@@ -61,13 +61,15 @@ class HashTable {
         int capacity;
         
     public:
-        HashTable();
-        HashTable(int capacity);
-        HashTable(HashTable& table);
+        HashTable(); // 0. Default Constructor
+        HashTable(int capacity); // 1. Normal Constructor
+        ~HashTable(); // 2. Destructor
+        HashTable(const HashTable& other); // 3. Copy Constructor
+        HashTable& operator=(const HashTable& other); // 4. Copy Assignment Operator
+        HashTable(HashTable&& other) noexcept; // 5. Move Constructor
+        HashTable& operator=(HashTable&& other) noexcept; // 6. Move Assignment Operator
         void copy_from(HashTable& table);
         void free_table();
-        ~HashTable();
-        HashTable& operator=(HashTable& table);
         unsigned int hash(const state& key) const;
         node& find_node(const state& key) const;
         bool in_table(const state& key) const;

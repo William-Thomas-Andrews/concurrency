@@ -115,12 +115,12 @@ TEST_P(HashTableParameterizedTests, LargeScaleInsertionAndRemoval) {
 
     for (int i = 0; i < amount_items; i++) {
         s = state(UINT16_MAX - GetParam() - i, UINT16_MAX - GetParam() - i, UINT16_MAX - GetParam() - i);
-        table.insert(node(s, 100));
+        table.insert(node(s, i));
         recorded_states[i] = s;
     }
 
     for (int i = 0; i < amount_items; i++)
-        EXPECT_EQ(table.find_val(recorded_states[i]), 100);
+        EXPECT_EQ(table.find_val(recorded_states[i]), i);
 
     for (int i = 0; i < amount_items; i++) {
         table.remove(recorded_states[i]);
