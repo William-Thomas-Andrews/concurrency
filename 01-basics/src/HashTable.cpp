@@ -99,6 +99,7 @@ Bucket::Bucket(const Bucket& other) {
     if (ptr == nullptr) return;
     head = std::make_unique<node>(*ptr);
     node* cur = head.get();
+    ptr = ptr->next.get();
     while (ptr != nullptr) {
         cur->next = std::make_unique<node>(*ptr);
         cur = cur->next.get();
@@ -113,6 +114,7 @@ Bucket& Bucket::operator=(const Bucket& other) {
     if (ptr == nullptr) return *this;
     head = std::make_unique<node>(*ptr);
     node* cur = head.get();
+    ptr = ptr->next.get();
     while (ptr != nullptr) {
         cur->next = std::make_unique<node>(*ptr);
         cur = cur->next.get();
