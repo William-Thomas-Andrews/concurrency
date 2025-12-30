@@ -43,6 +43,7 @@ struct Bucket {
     Bucket& operator=(Bucket&& other) noexcept;// 6. Move Assignment Operator
     void print_bucket() const;
     void free_bucket();
+    bool empty();
 };
 
 std::string get_string(node& input);
@@ -82,4 +83,4 @@ class HashTable {
 };
 
 void print_chain(const node* head);
-void free_chain(node* base);
+void free_chain(node*& base);

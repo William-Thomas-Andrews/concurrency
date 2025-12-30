@@ -159,13 +159,15 @@ void Bucket::free_bucket() {
     free_chain(this->head);
 }
 
+bool Bucket::empty() {
+    return head == nullptr;
+}
+
 
 
 
 HashTable::HashTable() : num_entries(0), num_items(0), capacity(16) {
     this->array.resize(this->capacity);
-    // for (int i = 0; i < this->capacity; i++) 
-    //     lock_array[i];
 }
 
 HashTable::HashTable(int cap) : num_entries(0), num_items(0), capacity(cap) {
@@ -178,11 +180,8 @@ HashTable::HashTable(HashTable& table) {
 
 void HashTable::copy_from(HashTable& table) {
     this->free_table();
-    this->array.clear();
     this->capacity = table.capacity;
     this->array.resize(this->capacity);
-    this->num_entries = 0;
-    this->num_items = 0;
     node* ptr;
     for (int i = 0; i < table.capacity; i++) {
         ptr = table.array[i].head;
@@ -196,6 +195,8 @@ void HashTable::copy_from(HashTable& table) {
 void HashTable::free_table() {
 //     // for (int i = 0; i < this->capacity; i++) this->array[i].free_bucket(); // DEPRECATED
     this->array.clear();
+    this->num_entries = 0;
+    this->num_items = 0;
 }
 
 HashTable::~HashTable() {
@@ -218,16 +219,17 @@ unsigned int HashTable::hash(const state& key) const {
 
 node& HashTable::find_node(const state& key) const {
     if (this->num_entries == 0) 
-        throw std::runtime_error("[remove] Error: key: "+ get_string(key) + " not found.");
-    int index = hash(key);
+        throw std::runtime_error("[find_node] Error: key: "+ get_string(key) + " not found. Errno 1");
+    unsigned index = hash(key);
     node* ptr = this->array[index].head;
-    if (ptr == nullptr) 
-        throw std::runtime_error("[remove] Error: key: " + get_string(key) + " not found.");
+    if (ptr == nullptr) {
+        throw std::runtime_error("[find_node] Error: key: " + get_string(key) + " not found. Errno 2");
+    }
     else if (ptr->key == key) {
         return *ptr;
     }
     else if (ptr->next == nullptr)  // if this item not the key but the only item in the list
-        throw std::runtime_error("[remove] Error: key: " + get_string(key) + " not found.");
+        throw std::runtime_error("[find_node] Error: key: " + get_string(key) + " not found. Errno 3");
     else if (ptr->next != nullptr) {
         ptr = ptr->next;
         while (ptr != nullptr) {
@@ -236,7 +238,7 @@ node& HashTable::find_node(const state& key) const {
             ptr = ptr->next;
         }
     }
-    throw std::runtime_error("[remove] Error: key: "+ get_string(key) + " not found.");
+    throw std::runtime_error("[find_node] Error: key: "+ get_string(key) + " not found. Errno 4");
 }
 
 bool HashTable::in_table(const state& key) const {
@@ -302,11 +304,14 @@ void HashTable::expand() {
 }
 
 void HashTable::insert(node& input) {
-    int index = this->hash(input.key);
+    unsigned index = this->hash(input.key);
     // std::unique_lock<std::shared_mutex> lock(this->lock_array[index]);
     if (this->in_table(input.key, index)) 
         throw std::runtime_error("[insert] Error: duplicate key found: " + get_string(input));
-    if (this->num_entries == capacity) this->expand(); // increases hash table size if needed
+    if (this->num_entries == capacity) {
+        this->expand(); // increases hash table size
+        index = this->hash(input.key); // rehash
+    }
     node* ptr = this->array[index].head;
     this->num_items++;
     if (ptr == nullptr) {
@@ -320,11 +325,14 @@ void HashTable::insert(node& input) {
 }
 
 void HashTable::insert(node&& input) {
-    int index = this->hash(input.key);
+    unsigned index = this->hash(input.key);
     // std::unique_lock<std::shared_mutex> lock(this->lock_array[index]);
-    if (this->num_items != 0 && this->in_table(input.key)) 
+    if (this->num_items != 0 && this->in_table(input.key, index)) 
         throw std::runtime_error("[insert] Error: duplicate key found: " + ::get_string(input));
-    if (this->num_entries == capacity) this->expand(); // increases hash table size if needed
+    if (this->num_entries == capacity) {
+        this->expand(); // increases hash table size
+        index = this->hash(input.key); // rehash
+    }
     node* ptr = this->array[index].head;
     this->num_items++;
     if (ptr == nullptr) {
@@ -342,14 +350,14 @@ void HashTable::remove(const state& key) {
     node* ptr = this->array[index].head;
     node* prev;
     if (ptr == nullptr) 
-        throw std::runtime_error("[remove] Error: key: "+ get_string(key) + " not found.");
+        throw std::runtime_error("[remove] Error: key: " + get_string(key) + " not found. Errno 1");
     else if (ptr->key == key) {
         this->array[index].head = ptr->next;
         free(ptr);
         return;
     }
     else if (ptr->next == nullptr)  // if this item not the key but the only item in the list
-        throw std::runtime_error("[remove] Error: key: "+ get_string(key) + " not found.");
+        throw std::runtime_error("[remove] Error: key: " + get_string(key) + " not found. Errno 2");
     else if (ptr->next != nullptr) {
         prev = ptr;
         ptr = ptr->next;
@@ -362,7 +370,7 @@ void HashTable::remove(const state& key) {
             ptr = ptr->next;
         }
     }
-    throw std::runtime_error("[remove] Error: key: "+ get_string(key) + " not found.");
+    throw std::runtime_error("[remove] Error: key: "+ get_string(key) + " not found. Errno 3");
 }
 
 void HashTable::print_table() const {
@@ -402,7 +410,7 @@ void print_chain(const node* head) {
     }
 }
 
-void free_chain(node* base) {
+void free_chain(node*& base) {
     if (base == nullptr) return;
     node* ptr;
     while (base->next != nullptr) {
