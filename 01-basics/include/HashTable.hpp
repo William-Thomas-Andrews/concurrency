@@ -8,10 +8,8 @@
 
 struct state {
     int i, j, k;
-    state& operator=(const state& other);
-    state();
-    state(int i, int j, int k);
-    ~state();
+    state() = default;
+    state(int i, int j, int k) : i(i), j(j), k(k) {}
 };
 
 std::string get_string(state& state);
@@ -23,24 +21,22 @@ void print_state(const state& s);
 struct node {
     state key;
     float value;
-    struct node* next;
-    node& operator=(const node& other_node);
-    node();
-    node(const state& key, int value);
-    node(const node& input);
-    ~node();
+    std::unique_ptr<node> next;
+    node() = default; // 0. Default Constructor
+    node(state k, float v) : key(k), value(v), next(nullptr) {} // 1. Normal Constructor
+    node(const node& other) : key(other.key), value(other.value), next(nullptr) {} // 2. Copy Constructor
 };
 
 struct Bucket {
-    node* head;
+    std::unique_ptr<node> head;
     std::shared_mutex lock;
-    Bucket(); // 0. Default Constructor
-    Bucket(node* node); // 1. Normal Constructor
-    ~Bucket(); // 2. Destructor
-    Bucket(const Bucket& other); // 3. Copy Constructor
-    Bucket& operator=(const Bucket& other); // 4. Copy Assignment Operator
-    Bucket(Bucket&& other) noexcept; // 5. Move Constructor
-    Bucket& operator=(Bucket&& other) noexcept;// 6. Move Assignment Operator
+    Bucket() = default;                          // 0. Default Constructor
+    Bucket(std::unique_ptr<node> other);         // 1. Normal Constructor
+    ~Bucket();                                   // 2. Destructor
+    Bucket(const Bucket& other);                 // 3. Copy Constructor
+    Bucket& operator=(const Bucket& other);      // 4. Copy Assignment Operator
+    Bucket(Bucket&& other) noexcept;            // 5. Move Constructor
+    Bucket& operator=(Bucket&& other) noexcept;  // 6. Move Assignment Operator
     void print_bucket() const;
     void free_bucket();
     bool empty();
@@ -68,7 +64,7 @@ class HashTable {
         HashTable& operator=(const HashTable& other); // 4. Copy Assignment Operator
         HashTable(HashTable&& other) noexcept; // 5. Move Constructor
         HashTable& operator=(HashTable&& other) noexcept; // 6. Move Assignment Operator
-        void copy_from(HashTable& table);
+        void copy_from(const HashTable& other);
         void free_table();
         unsigned int hash(const state& key) const;
         node& find_node(const state& key) const;
@@ -84,5 +80,5 @@ class HashTable {
         int get_num_entries() const;
 };
 
-void print_chain(const node* head);
-void free_chain(node*& base);
+void print_chain(node* head);
+void free_chain(std::unique_ptr<node>& base);
