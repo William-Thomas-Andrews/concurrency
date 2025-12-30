@@ -94,8 +94,11 @@ Bucket::~Bucket() {
 
 // 3. Copy Constructor
 Bucket::Bucket(const Bucket& other) {
+    std::cout << "here" << std::endl;
     free_bucket();
     node* ptr = other.head.get();
+    std::cout << "here" << std::endl;
+    if (ptr == nullptr) return;
     head = std::make_unique<node>(*ptr);
     node* cur = head.get();
     while (ptr != nullptr) {
@@ -109,6 +112,7 @@ Bucket::Bucket(const Bucket& other) {
 Bucket& Bucket::operator=(const Bucket& other) {
     free_bucket();
     node* ptr = other.head.get();
+    if (ptr == nullptr) return *this;
     head = std::make_unique<node>(*ptr);
     node* cur = head.get();
     while (ptr != nullptr) {
@@ -136,11 +140,26 @@ void Bucket::print_bucket() const {
 }
 
 void Bucket::free_bucket() {
-    free_chain(head); // automatically frees everything from ownership transfer and going out of scope
+    free_chain(std::move(head)); // automatically frees everything from ownership transfer and going out of scope
 }
 
-bool Bucket::empty() {
+bool Bucket::empty() const noexcept {
     return head == nullptr;
+}
+
+int Bucket::insert(node& input) {
+    if (head == nullptr) {
+        head = std::make_unique<node>(input);
+        return 1; // signifies a new entry was added
+    }
+    if (head->key == input.key) throw std::runtime_error("[insert] Error: duplicate key found: " + get_string(input));
+    node* ptr = head.get();
+    while (ptr->next != nullptr) {
+        if (ptr->key == input.key) throw std::runtime_error("[insert] Error: duplicate key found: " + get_string(input));
+        ptr = ptr->next.get();
+    }
+    ptr->next = std::make_unique<node>(input);
+    return 0; // signifies no new entry was added
 }
 
 // ------------------------------------------------------------------
@@ -199,18 +218,12 @@ void HashTable::copy_from(const HashTable& other) {
     free_table();
     capacity = other.capacity;
     array.resize(capacity);
-    node* ptr;
-    for (int i = 0; i < other.capacity; i++) {
-        ptr = other.array[i].head.get();
-        while (ptr != nullptr) {
-            insert(*ptr);
-            ptr = ptr->next.get();
-        }
-    }
+    for (int i = 0; i < other.capacity; i++)
+        array[i] = other.array[i]; // Bucket copy assignment
 }
 
 void HashTable::free_table() {
-    for (int i = 0; i < capacity; i++) array[i].free_bucket(); 
+    array.clear();
     num_entries = 0;
     num_items = 0;
 }
@@ -224,18 +237,12 @@ unsigned int HashTable::hash(const state& key) const {
 }
 
 node& HashTable::find_node(const state& key) const {
-    if (num_entries == 0) 
-        throw std::runtime_error("[find_node] Error: key: "+ get_string(key) + " not found. Errno 1");
+    if (num_entries == 0) throw std::runtime_error("[find_node] Error: key: "+ get_string(key) + " not found. Errno 1");
     unsigned index = hash(key);
     node* ptr = array[index].head.get();
-    if (ptr == nullptr) {
-        throw std::runtime_error("[find_node] Error: key: " + get_string(key) + " not found. Errno 2");
-    }
-    else if (ptr->key == key) {
-        return *ptr;
-    }
-    else if (ptr->next == nullptr)  // if this item not the key but the only item in the list
-        throw std::runtime_error("[find_node] Error: key: " + get_string(key) + " not found. Errno 3");
+    if (ptr == nullptr) throw std::runtime_error("[find_node] Error: key: " + get_string(key) + " not found. Errno 2");
+    else if (ptr->key == key) return *ptr;
+    else if (ptr->next == nullptr) throw std::runtime_error("[find_node] Error: key: " + get_string(key) + " not found. Errno 3");
     else if (ptr->next != nullptr) {
         ptr = ptr->next.get();
         while (ptr != nullptr) {
@@ -250,13 +257,9 @@ node& HashTable::find_node(const state& key) const {
 bool HashTable::in_table(const state& key) const {
     int index = hash(key);
     node* ptr = array[index].head.get();
-    if (ptr == nullptr) 
-        return false;
-    else if (ptr->key == key) {
-        return true;
-    }
-    else if (ptr->next == nullptr)  // if this item not the key but the only item in the list
-        return false;
+    if (ptr == nullptr)  return false;
+    else if (ptr->key == key) return true;
+    else if (ptr->next == nullptr) return false; // if this item not the key but the only item in the list
     else if (ptr->next != nullptr) {
         ptr = ptr->next.get();
         while (ptr != nullptr) {
@@ -269,15 +272,10 @@ bool HashTable::in_table(const state& key) const {
 }
 
 bool HashTable::in_table(const state& key, int index) const {
-    std::cout << "yep" << std::endl;
     node* ptr = array[index].head.get();
-    if (ptr == nullptr) 
-        return false;
-    else if (ptr->key == key) {
-        return true;
-    }
-    else if (ptr->next == nullptr)  // if this item not the key but the only item in the list
-        return false;
+    if (ptr == nullptr)  return false;
+    else if (ptr->key == key) return true;
+    else if (ptr->next == nullptr) return false; // if this item not the key but the only item in the list
     else if (ptr->next != nullptr) {
         ptr = ptr->next.get();
         while (ptr != nullptr) {
@@ -311,53 +309,24 @@ void HashTable::expand() {
 }
 
 void HashTable::insert(node& input) {
-    unsigned index = hash(input.key);
     // std::unique_lock<std::shared_mutex> lock(array[index].lock);
     if (num_entries == capacity) {
         expand(); // increases hash table size
-        index = hash(input.key); // rehash
     }
-    node* ptr = array[index].head.get();
-    if (ptr == nullptr) {
-        array[index].head = std::make_unique<node>(input);
-        num_entries++;
-        num_items++;
-        return;
-    }
-    if (ptr->key == input.key) 
-        throw std::runtime_error("[insert] Error: duplicate key found: " + get_string(input));
-    while (ptr != nullptr && ptr->next != nullptr) {
-        ptr = ptr->next.get();
-        if (ptr->key == input.key) 
-            throw std::runtime_error("[insert] Error: duplicate key found: " + get_string(input));
-    }
-    ptr->next = std::make_unique<node>(input);
+    unsigned index = hash(input.key);
+    if (array[index].insert(input) == 1) num_entries++; 
     num_items++;
     // lock automatically unlocks when going out of scope
 }
 
 void HashTable::insert(node&& input) {
-    unsigned index = hash(input.key);
     // std::unique_lock<std::shared_mutex> lock(array[index].lock);
     if (num_entries == capacity) {
         expand(); // increases hash table size
-        index = hash(input.key); // rehash
     }
-    node* ptr = array[index].head.get();
+    unsigned index = hash(input.key);
+    if (array[index].insert(input) == 1) num_entries++;
     num_items++;
-    if (ptr == nullptr) {
-        array[index].head = std::make_unique<node>(input);
-        num_entries++;
-        return;
-    }    
-    if (ptr->key == input.key) 
-        throw std::runtime_error("[insert] Error: duplicate key found: " + get_string(input));
-    while (ptr != nullptr && ptr->next != nullptr) {
-        ptr = ptr->next.get();
-        if (ptr->key == input.key) 
-            throw std::runtime_error("[insert] Error: duplicate key found: " + get_string(input));
-    }
-    ptr->next = std::make_unique<node>(input);
     // lock automatically unlocks when going out of scope
 }
 
@@ -428,6 +397,6 @@ void print_chain(node* head) {
     }
 }
 
-void free_chain(std::unique_ptr<node>& base) {
-    base.release();
+void free_chain(std::unique_ptr<node> base) {
+    // automatically frees
 }
