@@ -87,53 +87,52 @@ Bucket::Bucket(std::unique_ptr<node> other) {
     head = std::move(other);
 }
 
-// 2. Destructor
-Bucket::~Bucket() {
-    free_bucket();
-}
+// // 2. Destructor
+// Bucket::~Bucket() {
+//     // free_bucket();
+// }
 
-// 3. Copy Constructor
-Bucket::Bucket(const Bucket& other) {
-    free_bucket();
-    node* ptr = other.head.get();
-    if (ptr == nullptr) return;
-    head = std::make_unique<node>(*ptr);
-    node* cur = head.get();
-    ptr = ptr->next.get();
-    while (ptr != nullptr) {
-        cur->next = std::make_unique<node>(*ptr);
-        cur = cur->next.get();
-        ptr = ptr->next.get();
-    }
-}
+// // 3. Copy Constructor
+// Bucket::Bucket(const Bucket& other) {
+//     node* ptr = other.head.get();
+//     if (ptr == nullptr) return;
+//     head = std::make_unique<node>(*ptr);
+//     node* cur = head.get();
+//     ptr = ptr->next.get();
+//     while (ptr != nullptr) {
+//         cur->next = std::make_unique<node>(*ptr);
+//         cur = cur->next.get();
+//         ptr = ptr->next.get();
+//     }
+// }
 
-// 4. Copy Assignment Operator
-Bucket& Bucket::operator=(const Bucket& other) {
-    free_bucket();
-    node* ptr = other.head.get();
-    if (ptr == nullptr) return *this;
-    head = std::make_unique<node>(*ptr);
-    node* cur = head.get();
-    ptr = ptr->next.get();
-    while (ptr != nullptr) {
-        cur->next = std::make_unique<node>(*ptr);
-        cur = cur->next.get();
-        ptr = ptr->next.get();
-    }
-    return *this;
-}
+// // 4. Copy Assignment Operator
+// Bucket& Bucket::operator=(const Bucket& other) {
+//     // free_bucket();
+//     node* ptr = other.head.get();
+//     if (ptr == nullptr) return *this;
+//     head = std::make_unique<node>(*ptr);
+//     node* cur = head.get();
+//     ptr = ptr->next.get();
+//     while (ptr != nullptr) {
+//         cur->next = std::make_unique<node>(*ptr);
+//         cur = cur->next.get();
+//         ptr = ptr->next.get();
+//     }
+//     return *this;
+// }
 
-// 5. Move Constructor 
-Bucket::Bucket(Bucket&& other) noexcept : head(std::exchange(other.head, nullptr)) {
-    // transfers ownership and leaves the source in a valid, empty state
-}
+// // 5. Move Constructor 
+// Bucket::Bucket(Bucket&& other) noexcept : head(std::exchange(other.head, nullptr)) {
+//     // transfers ownership and leaves the source in a valid, empty state
+// }
 
-// 6. Move Assignment Operator 
-Bucket& Bucket::operator=(Bucket&& other) noexcept { 
-    // transfers ownership and leaves the source in a valid, empty state
-    head = std::exchange(other.head, nullptr);
-    return *this;
-}
+// // 6. Move Assignment Operator 
+// Bucket& Bucket::operator=(Bucket&& other) noexcept { 
+//     // transfers ownership and leaves the source in a valid, empty state
+//     head = std::exchange(other.head, nullptr);
+//     return *this;
+// }
 
 void Bucket::print_bucket() const {
     print_chain(head.get());
@@ -147,7 +146,7 @@ bool Bucket::empty() const noexcept {
     return head == nullptr;
 }
 
-int Bucket::insert(node& input) {
+int Bucket::bucket_insert(node& input) {
     if (head == nullptr) {
         head = std::make_unique<node>(input);
         return 1; // signifies a new entry was added
@@ -158,8 +157,15 @@ int Bucket::insert(node& input) {
         if (ptr->key == input.key) throw std::runtime_error("[insert] Error: duplicate key found: " + get_string(input));
         ptr = ptr->next.get();
     }
+    if (ptr->key == input.key) throw std::runtime_error("[insert] Error: duplicate key found: " + get_string(input));
     ptr->next = std::make_unique<node>(input);
     return 0; // signifies no new entry was added
+}
+
+node Bucket::pop() {
+    node ret = *head.get();
+    head = std::move(head->next);
+    return ret;
 }
 
 // ------------------------------------------------------------------
@@ -173,50 +179,17 @@ int Bucket::insert(node& input) {
 
 // 0. Default Constructor
 HashTable::HashTable() : num_entries(0), num_items(0), capacity(16) {
-    array.resize(capacity);
+    array.reserve(capacity);
+    for (int i = 0; i < capacity; i++)
+        array.push_back(std::make_unique<Bucket>());
 }
 
 // 1. Normal Constructor
 HashTable::HashTable(int cap) : num_entries(0), num_items(0), capacity(cap) {
-    array.resize(capacity);
+    array.reserve(capacity);
+    for (int i = 0; i < capacity; i++)
+        array.push_back(std::make_unique<Bucket>());
 }
-
-// // 2. Destructor
-// HashTable::~HashTable() {
-//     free_table();
-// }
-
-// // 3. Copy Constructor
-// HashTable::HashTable(const HashTable& other) : 
-//     array(other.array), 
-//     num_entries(other.num_entries), 
-//     num_items(other.num_items), 
-//     capacity(other.capacity) 
-//     {}
-
-// // 4. Copy Assignment Operator
-// HashTable& HashTable::operator=(const HashTable& other) {
-//     copy_from(other);
-//     return *this;
-// }
-
-// // 5. Move Constructor
-// HashTable::HashTable(HashTable&& other) noexcept {
-//     num_entries = other.num_entries;
-//     num_items = other.num_items;
-//     capacity = other.capacity;
-//     array = std::move(other.array);
-// }
-
-// // 6. Move Assignment Operator
-// HashTable& HashTable::operator=(HashTable&& other) noexcept {
-//     num_entries = other.num_entries;
-//     num_items = other.num_items;
-//     capacity = other.capacity;
-//     array = std::move(other.array);
-//     return *this;
-// }
-
 
 void HashTable::free_table() {
     array.clear();
@@ -232,10 +205,12 @@ unsigned int HashTable::hash(const state& key) const {
     return h % capacity;
 }
 
-node& HashTable::find_node(const state& key) const {
+node& HashTable::find_node(const state& key) {
+    std::shared_lock<std::shared_mutex> s_lock(table_lock);
     if (num_entries == 0) throw std::runtime_error("[find_node] Error: key: " + get_string(key) + " not found. Errno 1");
     unsigned index = hash(key);
-    node* ptr = array[index].head.get();
+    std::shared_lock<std::shared_mutex> b_lock(array[index]->lock);
+    node* ptr = array[index]->head.get();
     if (ptr == nullptr) throw std::runtime_error("[find_node] Error: key: " + get_string(key) + " not found. Errno 2");
     else if (ptr->key == key) return *ptr;
     else if (ptr->next == nullptr) throw std::runtime_error("[find_node] Error: key: " + get_string(key) + " not found. Errno 3");
@@ -251,8 +226,8 @@ node& HashTable::find_node(const state& key) const {
 }
 
 bool HashTable::in_table(const state& key) const {
-    int index = hash(key);
-    node* ptr = array[index].head.get();
+    unsigned index = hash(key);
+    node* ptr = array[index]->head.get();
     if (ptr == nullptr)  return false;
     else if (ptr->key == key) return true;
     else if (ptr->next == nullptr) return false; // if this item not the key but the only item in the list
@@ -268,7 +243,7 @@ bool HashTable::in_table(const state& key) const {
 }
 
 bool HashTable::in_table(const state& key, int index) const {
-    node* ptr = array[index].head.get();
+    node* ptr = array[index]->head.get();
     if (ptr == nullptr)  return false;
     else if (ptr->key == key) return true;
     else if (ptr->next == nullptr) return false; // if this item not the key but the only item in the list
@@ -283,14 +258,14 @@ bool HashTable::in_table(const state& key, int index) const {
     return false;
 }
 
-int HashTable::find_val(const state& key) const {
+int HashTable::find_val(const state& key) {
     return find_node(key).value;
 }
 
 void HashTable::rehash_to(HashTable& table) {
     node* ptr;
     for (int i = 0; i < capacity; i++) {
-        ptr = array[i].head.get();
+        ptr = array[i]->head.get();
         while (ptr != nullptr) {
             table.insert(*ptr);
             ptr = ptr->next.get();
@@ -299,57 +274,88 @@ void HashTable::rehash_to(HashTable& table) {
 }
 
 void HashTable::expand() {
-    HashTable temp = HashTable(capacity * 2);
-    rehash_to(temp);
-    *this = temp;
+    std::vector<std::unique_lock<std::shared_mutex>> locks;
+    for (int i = 0; i < capacity; i++) // Locks down the entire table now that expansion has been called
+        locks.push_back(std::unique_lock<std::shared_mutex>(array[i]->lock));
+    for (int i = capacity; i < capacity*2; i++)
+        array.push_back(std::make_unique<Bucket>());
+    capacity *= 2;
+    HashTable temp = HashTable(capacity);
+    for (int i = 0; i < capacity; i++)
+        while (!array[i]->empty())
+            temp.expansion_insert(array[i]->pop());
+    for (int i = 0; i < capacity; i++)
+        while (!temp.array[i]->empty())
+            expansion_insert(temp.array[i]->pop());
+    // (lock goes out of scope) unlocks table 
 }
 
 void HashTable::insert(node& input) {
-    // std::unique_lock<std::shared_mutex> lock(array[index].lock);
-    if (num_entries == capacity) {
-        expand(); // increases hash table size
-    }
+    { std::unique_lock<std::shared_mutex> u_lock(table_lock); // locks table for possible expansion
+    if (num_entries == capacity)
+        expand(); // increases hash table size atomically
+    } // unlocks expansion lock regardless of if condition was met
     unsigned index = hash(input.key);
-    if (array[index].insert(input) == 1) num_entries++; 
+    std::unique_lock<std::shared_mutex> b_lock(array[index]->lock);
+    if (array[index]->bucket_insert(input) == 1) num_entries++;
     num_items++;
     // lock automatically unlocks when going out of scope
 }
 
 void HashTable::insert(node&& input) {
-    // std::unique_lock<std::shared_mutex> lock(array[index].lock);
-    if (num_entries == capacity) {
-        expand(); // increases hash table size
-    }
+    { std::unique_lock<std::shared_mutex> u_lock(table_lock); // locks table for possible expansion
+    if (num_entries == capacity)
+        expand(); // increases hash table size atomically
+    } // unlocks expansion lock regardless of if condition was met
     unsigned index = hash(input.key);
-    if (array[index].insert(input) == 1) num_entries++;
+    std::unique_lock<std::shared_mutex> b_lock(array[index]->lock);
+    if (array[index]->bucket_insert(input) == 1) num_entries++;
     num_items++;
     // lock automatically unlocks when going out of scope
 }
 
+// No lock involved
+void HashTable::expansion_insert(node& input) {
+    unsigned index = hash(input.key);
+    if (array[index]->bucket_insert(input) == 1) num_entries++;
+    num_items++;
+}
+
+// No lock involved
+void HashTable::expansion_insert(node&& input) {
+    unsigned index = hash(input.key);
+    if (array[index]->bucket_insert(input) == 1) num_entries++;
+    num_items++;
+}
+
 void HashTable::remove(const state& key) {
     int index = hash(key);
-    node* ptr = array[index].head.get();
+    std::unique_lock<std::shared_mutex> b_lock(array[index]->lock);
+    node* ptr = array[index]->head.get();
     node* prev;
     if (ptr == nullptr) 
-        throw std::runtime_error("[remove] Error: key: " + get_string(key) + " not found. Errno 1");
+        throw std::runtime_error("[remove] Error: key: " + get_string(key) + " not found. [DEBUG] Errno 1");
     else if (ptr->key == key) {
-        array[index].head = std::move(ptr->next);
+        if (ptr->next == nullptr) num_entries--;
+        num_items--;
+        array[index]->head = std::move(ptr->next);
         return;
     }
     else if (ptr->next == nullptr)  // if this item not the key but the only item in the list
-        throw std::runtime_error("[remove] Error: key: " + get_string(key) + " not found. Errno 2");
+        throw std::runtime_error("[remove] Error: key: " + get_string(key) + " not found. [DEBUG] Errno 2");
     else if (ptr->next != nullptr) {
         prev = ptr;
         ptr = ptr->next.get();
         while (ptr != nullptr) {
             if (ptr->key == key) {
                 prev->next = std::move(ptr->next);
+                num_items--;
                 return;
             }
             ptr = ptr->next.get();
         }
     }
-    throw std::runtime_error("[remove] Error: key: "+ get_string(key) + " not found. Errno 3");
+    throw std::runtime_error("[remove] Error: key: "+ get_string(key) + " not found. [DEBUG] Errno 3");
 }
 
 void HashTable::print_table() const {
@@ -361,17 +367,28 @@ void HashTable::print_table() const {
         std::cout << "[ ";
         if (i < 10) std::cout << " ";   // alignment for single-digit indices
         std::cout << i << " ] : ";
-        array[i].print_bucket();
+        array[i]->print_bucket();
         std::cout << '\n';
     }
 
     std::cout << "--------------------------------------------------\n";
 }
 
-int HashTable::get_num_entries() const {
-    return num_entries;
+int* HashTable::get_num_entries() {
+    return &num_entries;
 }
 
+int* HashTable::get_num_items() {
+    return &num_items;
+}
+
+int* HashTable::get_capacity() {
+    return &capacity;
+}
+
+std::vector<std::unique_ptr<Bucket>>& HashTable::get_array() {
+    return array;
+}
 
 
 
@@ -393,6 +410,8 @@ void print_chain(node* head) {
     }
 }
 
+// Call std::move(head) as the argument like so: 
+// free_chain(std::move(head));
 void free_chain(std::unique_ptr<node> base) {
     // automatically frees
 }

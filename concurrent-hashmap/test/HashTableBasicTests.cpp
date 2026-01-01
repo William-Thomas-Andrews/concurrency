@@ -8,7 +8,7 @@ TEST(HashTableBasicTests, DefaultConstructor) {
 
 TEST(HashTableBasicTests, CapacityConstructor) {
     HashTable table(32);
-    EXPECT_EQ(table.get_num_entries(), 0);
+    EXPECT_EQ(*table.get_num_entries(), 0);
 }
 
 TEST(HashTableBasicTests, EmptyTableLookupThrows) {
