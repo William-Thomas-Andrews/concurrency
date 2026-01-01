@@ -206,7 +206,7 @@ unsigned int HashTable::hash(const state& key) const {
 }
 
 node& HashTable::find_node(const state& key) {
-    std::shared_lock<std::shared_mutex> s_lock(table_lock);
+    std::shared_lock<std::shared_mutex> st_lock(table_lock);
     if (num_entries == 0) throw std::runtime_error("[find_node] Error: key: " + get_string(key) + " not found. Errno 1");
     unsigned index = hash(key);
     std::shared_lock<std::shared_mutex> b_lock(array[index]->lock);
@@ -225,8 +225,11 @@ node& HashTable::find_node(const state& key) {
     throw std::runtime_error("[find_node] Error: key: " + get_string(key) + " not found. Errno 4");
 }
 
-bool HashTable::in_table(const state& key) const {
+bool HashTable::in_table(const state& key) {
+    std::shared_lock<std::shared_mutex> st_lock(table_lock);
+    if (num_entries == 0) return false;
     unsigned index = hash(key);
+    std::shared_lock<std::shared_mutex> s_lock(array[index]->lock);
     node* ptr = array[index]->head.get();
     if (ptr == nullptr)  return false;
     else if (ptr->key == key) return true;
@@ -242,7 +245,10 @@ bool HashTable::in_table(const state& key) const {
     return false;
 }
 
-bool HashTable::in_table(const state& key, int index) const {
+bool HashTable::in_table(const state& key, int index) {
+    std::shared_lock<std::shared_mutex> st_lock(table_lock);
+    if (num_entries == 0) return false;
+    std::shared_lock<std::shared_mutex> s_lock(array[index]->lock);
     node* ptr = array[index]->head.get();
     if (ptr == nullptr)  return false;
     else if (ptr->key == key) return true;
@@ -291,10 +297,11 @@ void HashTable::expand() {
 }
 
 void HashTable::insert(node& input) {
-    { std::unique_lock<std::shared_mutex> u_lock(table_lock); // locks table for possible expansion
+    { std::unique_lock<std::shared_mutex> ut_lock(table_lock); // locks table for possible expansion
     if (num_entries == capacity)
         expand(); // increases hash table size atomically
     } // unlocks expansion lock regardless of if condition was met
+    std::shared_lock<std::shared_mutex> s_lock(table_lock);
     unsigned index = hash(input.key);
     std::unique_lock<std::shared_mutex> b_lock(array[index]->lock);
     if (array[index]->bucket_insert(input) == 1) num_entries++;
@@ -303,10 +310,11 @@ void HashTable::insert(node& input) {
 }
 
 void HashTable::insert(node&& input) {
-    { std::unique_lock<std::shared_mutex> u_lock(table_lock); // locks table for possible expansion
+    { std::unique_lock<std::shared_mutex> ut_lock(table_lock); // locks table for possible expansion
     if (num_entries == capacity)
         expand(); // increases hash table size atomically
     } // unlocks expansion lock regardless of if condition was met
+    std::shared_lock<std::shared_mutex> s_lock(table_lock);
     unsigned index = hash(input.key);
     std::unique_lock<std::shared_mutex> b_lock(array[index]->lock);
     if (array[index]->bucket_insert(input) == 1) num_entries++;
@@ -329,6 +337,7 @@ void HashTable::expansion_insert(node&& input) {
 }
 
 void HashTable::remove(const state& key) {
+    std::shared_lock<std::shared_mutex> st_lock(table_lock);
     int index = hash(key);
     std::unique_lock<std::shared_mutex> b_lock(array[index]->lock);
     node* ptr = array[index]->head.get();
@@ -358,7 +367,8 @@ void HashTable::remove(const state& key) {
     throw std::runtime_error("[remove] Error: key: "+ get_string(key) + " not found. [DEBUG] Errno 3");
 }
 
-void HashTable::print_table() const {
+void HashTable::print_table() {
+    std::unique_lock<std::shared_mutex> ut_lock(table_lock);
     std::cout << "HashTable (capacity = " << capacity
               << ", num_entries = " << num_entries << ", num_items = " << num_items << ")\n";
     std::cout << "--------------------------------------------------\n";
@@ -370,7 +380,7 @@ void HashTable::print_table() const {
         array[i]->print_bucket();
         std::cout << '\n';
     }
-
+    ut_lock.unlock();
     std::cout << "--------------------------------------------------\n";
 }
 

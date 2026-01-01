@@ -71,8 +71,8 @@ class HashTable {
         void free_table();
         unsigned int hash(const state& key) const;
         node& find_node(const state& key);
-        bool in_table(const state& key) const;
-        bool in_table(const state& key, int index) const;
+        bool in_table(const state& key);
+        bool in_table(const state& key, int index);
         int find_val(const state& key);
         void rehash_to(HashTable& table);
         void expand();
@@ -81,7 +81,7 @@ class HashTable {
         void expansion_insert(node& input);
         void expansion_insert(node&& input);
         void remove(const state& key);
-        void print_table() const;
+        void print_table();
         int* get_num_entries();
         int* get_num_items();
         int* get_capacity();
