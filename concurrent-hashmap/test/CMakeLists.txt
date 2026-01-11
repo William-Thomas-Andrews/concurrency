@@ -15,6 +15,7 @@ add_executable(hashtable_tests
     HashTableInsertTests.cpp
     HashTableRemoveTests.cpp
     HashTableEdgeCaseTests.cpp
+    HashTableConcurrentTests.cpp
 )
 
 target_link_libraries(hashtable_tests

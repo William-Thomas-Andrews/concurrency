@@ -1,3 +1,4 @@
-01-basics/build
 concurrent-hashmap/build
+intro-go/
+go-deque/
 .vscode

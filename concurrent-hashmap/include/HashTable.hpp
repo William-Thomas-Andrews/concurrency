@@ -24,7 +24,7 @@ struct node {
     int value;
     std::unique_ptr<node> next;
     node() = default; // 0. Default Constructor
-    node(state k, float v) : key(k), value(v), next(nullptr) {} // 1. Normal Constructor
+    node(state k, int v) : key(k), value(v), next(nullptr) {} // 1. Normal Constructor
     node(const node& other) : key(other.key), value(other.value), next(nullptr) {} // 2. Copy Constructor
 };
 

@@ -361,10 +361,11 @@ void HashTable::remove(const state& key) {
                 num_items--;
                 return;
             }
+            prev = ptr;
             ptr = ptr->next.get();
         }
     }
-    throw std::runtime_error("[remove] Error: key: "+ get_string(key) + " not found. [DEBUG] Errno 3");
+    throw std::runtime_error("[remove] Error: key: " + get_string(key) + " not found. [DEBUG] Errno 3");
 }
 
 void HashTable::print_table() {
